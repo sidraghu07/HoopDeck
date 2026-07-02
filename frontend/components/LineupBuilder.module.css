@@ -1,0 +1,260 @@
+.wrap {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) 1fr;
+  gap: 24px;
+  padding: 24px;
+  min-height: calc(100vh - 40px);
+  background: var(--bg-void);
+  background-image: radial-gradient(circle at 20% 0%, var(--bg-surface-alt) 0%, var(--bg-void) 60%);
+}
+
+.searchPanel,
+.rosterPanel {
+  background: var(--bg-surface);
+  border: 2px solid var(--border-muted);
+  padding: 16px;
+  height: fit-content;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  background: var(--bg-void);
+  border: 3px solid var(--accent);
+  box-shadow: 0 0 0 3px var(--bg-surface), inset 0 0 12px rgba(232, 179, 57, 0.15);
+}
+
+.prompt {
+  font-family: "Press Start 2P", monospace;
+  color: var(--accent);
+  font-size: 14px;
+  padding: 10px 8px 10px 14px;
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: "VT323", monospace;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  caret-color: var(--accent);
+  padding: 10px 8px;
+  min-width: 0;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.hint {
+  font-family: "VT323", monospace;
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: 10px;
+  letter-spacing: 1px;
+}
+
+.seasonPicker {
+  margin-top: 10px;
+  border: 1px solid var(--border-muted);
+  padding: 10px;
+}
+
+.seasonPickerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.closeBtn:hover {
+  color: var(--text-primary);
+}
+
+.seasonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 10px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.miniCardWrap {
+  position: relative;
+  width: calc(240px * 0.55);
+  height: calc(300px * 0.55);
+  overflow: hidden;
+}
+
+.miniCardPlaced {
+  opacity: 0.3;
+}
+
+.miniCardPlaced > div {
+  cursor: default;
+}
+
+.rosterHeader {
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  color: var(--text-primary);
+  letter-spacing: 1px;
+  margin-bottom: 14px;
+}
+
+.needMore {
+  color: var(--text-muted);
+  font-size: 8px;
+}
+
+.starterRow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.benchLabel {
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.benchGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.slot {
+  position: relative;
+  min-height: 178px;
+  border: 2px dashed var(--border-muted);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: border-color 100ms, background 100ms;
+}
+
+.slotEmpty {
+  justify-content: center;
+  gap: 4px;
+}
+
+.slotFilled {
+  justify-content: flex-start;
+  border-style: solid;
+  border-color: var(--border-strong);
+  background: var(--bg-void);
+}
+
+.slotDragOver {
+  border-color: var(--accent);
+  background: rgba(232, 179, 57, 0.08);
+}
+
+.slotLabel {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+.slotEmpty .slotLabel {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+
+.slotHint {
+  font-family: "VT323", monospace;
+  font-size: 13px;
+  color: var(--border-strong);
+  letter-spacing: 1px;
+}
+
+.slotRemove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.65);
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 5px;
+}
+
+.slotRemove:hover {
+  color: #dc2626;
+}
+
+.simulateBtn {
+  width: 100%;
+  font-family: "Press Start 2P", monospace;
+  font-size: 13px;
+  color: var(--bg-void);
+  background: var(--accent);
+  border: none;
+  padding: 14px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--accent-dim);
+  transition: transform 80ms steps(2), box-shadow 80ms steps(2);
+}
+
+.simulateBtn:hover:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--accent-dim);
+}
+
+.simulateBtn:disabled {
+  background: var(--border-muted);
+  color: var(--text-muted);
+  box-shadow: none;
+  cursor: default;
+}
+
+.error {
+  margin-top: 12px;
+  font-family: "VT323", monospace;
+  color: #dc2626;
+  font-size: 15px;
+}
+
+.viewResultBtn {
+  width: 100%;
+  margin-top: 12px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--bg-void);
+  border: 2px solid var(--accent);
+  padding: 12px;
+  cursor: pointer;
+  transition: background 80ms;
+}
+
+.viewResultBtn:hover {
+  background: var(--bg-surface-alt);
+}

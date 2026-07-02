@@ -1,9 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getPlayers } from "@/lib/api";
 import { CareerCard, PlayerSeasonCard } from "@/lib/types";
 import PlayersExplorer from "@/components/PlayersExplorer";
-import styles from "./page.module.css";
 
 const DEFAULT_SEASON = "2025-26";
 
@@ -46,25 +44,19 @@ export default async function PlayersPage({ searchParams }: PageProps) {
   ).sort();
 
   return (
-    <>
-      <nav className={styles.nav}>
-        <Link href="/" className={styles.homeLink}>← HOME</Link>
-        <span className={styles.navTitle}>PLAYER DATABASE</span>
-      </nav>
-      <PlayersExplorer
-        seasonCards={seasonCards}
-        careerCards={careerCards}
-        cardCount={data?.meta?.total ?? 0}
-        isAllSeasons={isAllSeasons}
-        season={season}
-        name={name ?? ""}
-        tier={tier ?? ""}
-        position={position ?? ""}
-        seasons={seasons}
-        positions={positions}
-        page={currentPage}
-        totalPages={data?.meta?.total_pages ?? 1}
-      />
-    </>
+    <PlayersExplorer
+      seasonCards={seasonCards}
+      careerCards={careerCards}
+      cardCount={data?.meta?.total ?? 0}
+      isAllSeasons={isAllSeasons}
+      season={season}
+      name={name ?? ""}
+      tier={tier ?? ""}
+      position={position ?? ""}
+      seasons={seasons}
+      positions={positions}
+      page={currentPage}
+      totalPages={data?.meta?.total_pages ?? 1}
+    />
   );
 }

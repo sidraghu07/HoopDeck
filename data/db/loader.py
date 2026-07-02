@@ -1,6 +1,25 @@
 import psycopg
 
 
+def load_team_seasons(teams_df, database_url: str) -> None:
+    print("\nLoading team_seasons into Postgres…")
+    with psycopg.connect(database_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute("TRUNCATE TABLE team_seasons")
+            with cur.copy(
+                "COPY team_seasons (team, season, team_name, games_played, wins, losses, "
+                "win_pct, off_rating, def_rating, net_rating, pace) FROM STDIN"
+            ) as copy:
+                for row in teams_df.itertuples(index=False):
+                    copy.write_row((
+                        row.TEAM_ABBREVIATION, row.SEASON, row.TEAM_NAME, int(row.GP),
+                        int(row.W), int(row.L), row.W_PCT,
+                        row.OFF_RATING, row.DEF_RATING, row.NET_RATING, row.PACE,
+                    ))
+        conn.commit()
+    print(f"  ✓ Loaded {len(teams_df):,} team-seasons into Postgres")
+
+
 def load_to_postgres(cards: list, database_url: str) -> None:
     print("\nLoading into Postgres…")
     with psycopg.connect(database_url) as conn:

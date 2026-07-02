@@ -122,3 +122,39 @@ export interface CareerSummary {
     impact: number;
   };
 }
+
+export interface LineupPlayerInput {
+  player_id: number;
+  season: string;
+  position?: string;
+}
+
+export interface LineupRosterEntry {
+  player_id: number;
+  player_name: string;
+  season: string;
+  team: string;
+  primary_position: string;
+  assigned_position: string | null;
+  tier: Tier;
+  rating_overall: number;
+  assumed_minutes: number;
+}
+
+export interface LineupRosterFeatures {
+  avg_scoring: number;
+  avg_playmaking: number;
+  avg_defense: number;
+  avg_impact: number;
+  avg_overall: number;
+  star_power: number;
+  bench_overall: number;
+}
+
+export interface LineupResult {
+  predicted_net_rating: number;
+  predicted_win_pct: number;
+  predicted_record: string;
+  roster_features: LineupRosterFeatures;
+  roster: LineupRosterEntry[];
+}

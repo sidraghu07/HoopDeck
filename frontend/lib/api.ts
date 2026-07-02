@@ -28,3 +28,16 @@ export async function getPlayer(id: number, season?: string) {
   if (!res.ok) throw new Error(`API ${res.status}`);
   return res.json();
 }
+
+export async function simulateLineup(players: { player_id: number; season: string; position?: string }[]) {
+  const res = await fetch(`${API}/api/lineups/simulate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ players }),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail ?? `API ${res.status}`);
+  }
+  return res.json();
+}

@@ -97,8 +97,12 @@ export default async function HomePage() {
             <span className={styles.btnCaret2}>_</span>
           </Link>
 
+          <Link href="/lineups" className={styles.secondaryBtn}>
+            SIMULATE A LINEUP
+          </Link>
+
           <div className={styles.footer}>
-            <span>POWERED BY NBA STATS &amp; SHOT TRACKING</span>
+            <span>All Stats from 1996-2026</span>
           </div>
         </div>
 

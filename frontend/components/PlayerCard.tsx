@@ -20,7 +20,14 @@ type CareerCardProps = {
 
 export type PlayerCardProps = SeasonCardProps | CareerCardProps;
 
-export default function PlayerCard(props: PlayerCardProps & { onClick?: () => void }) {
+export default function PlayerCard(
+  props: PlayerCardProps & {
+    onClick?: () => void;
+    draggable?: boolean;
+    onDragStart?: (e: React.DragEvent) => void;
+    scale?: number;
+  }
+) {
   const tier = props.mode === "season" ? props.data.tier : props.data.bestTier;
   const style = TIER_STYLE[tier];
 
@@ -39,11 +46,16 @@ export default function PlayerCard(props: PlayerCardProps & { onClick?: () => vo
     <div
       className={`${styles.card} ${isLegendary ? styles.legendary : ""} ${props.onClick ? styles.clickable : ""}`}
       onClick={props.onClick}
+      draggable={props.draggable}
+      onDragStart={props.onDragStart}
       style={
         {
           "--tier-border": style.border,
           "--tier-glow": style.glow,
           "--tier-bg": style.bg,
+          ...(props.scale
+            ? { transform: `scale(${props.scale})`, transformOrigin: "top left" }
+            : {}),
         } as React.CSSProperties
       }
     >
@@ -125,6 +137,7 @@ function PlayerPortrait({
           className={styles.playerImg}
           onError={() => setImgFailed(true)}
           unoptimized
+          draggable={false}
         />
       ) : (
         <span className={styles.initials}>{initials}</span>

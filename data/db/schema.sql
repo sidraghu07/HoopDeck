@@ -96,3 +96,19 @@ CREATE TABLE IF NOT EXISTS ratings_by_position (
     PRIMARY KEY (player_id, season, position),
     FOREIGN KEY (player_id, season) REFERENCES player_seasons (player_id, season) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS team_seasons (
+    team          TEXT NOT NULL,
+    season        TEXT NOT NULL,
+    team_name     TEXT NOT NULL,
+    games_played  INTEGER NOT NULL,
+    wins          INTEGER NOT NULL,
+    losses        INTEGER NOT NULL,
+    win_pct       REAL NOT NULL,
+    off_rating    REAL NOT NULL,
+    def_rating    REAL NOT NULL,
+    net_rating    REAL NOT NULL,
+    pace          REAL NOT NULL,
+
+    PRIMARY KEY (team, season)
+);

@@ -165,4 +165,3 @@ payload = {
 with open(OUT_JSON, "w") as f:
     json.dump(payload, f, indent=2)
 
-print(f"\n✓ Written → {OUT_JSON}")
