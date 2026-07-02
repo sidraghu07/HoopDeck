@@ -157,6 +157,16 @@
   right: -48px;
 }
 
+@media (max-width: 480px) {
+  .carousel-arrow-prev {
+    left: 4px;
+  }
+
+  .carousel-arrow-next {
+    right: 4px;
+  }
+}
+
 .carousel-indicators-container {
   display: flex;
   width: 100%;

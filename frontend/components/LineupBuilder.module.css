@@ -8,6 +8,14 @@
   background-image: radial-gradient(circle at 20% 0%, var(--bg-surface-alt) 0%, var(--bg-void) 60%);
 }
 
+@media (max-width: 800px) {
+  .wrap {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 16px;
+  }
+}
+
 .searchPanel,
 .rosterPanel {
   background: var(--bg-surface);
@@ -125,7 +133,7 @@
 
 .starterRow {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 10px;
   margin-bottom: 18px;
 }
@@ -140,7 +148,7 @@
 
 .benchGrid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 10px;
   margin-bottom: 18px;
 }

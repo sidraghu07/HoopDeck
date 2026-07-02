@@ -29,6 +29,54 @@ export async function getPlayer(id: number, season?: string) {
   return res.json();
 }
 
+export async function getPlayerStatsBySeason(season: string) {
+  const res = await fetch(`${API}/api/stats/players?season=${season}`, {
+    next: { revalidate: 300 },
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function getTeamStatsBySeason(season: string) {
+  const res = await fetch(`${API}/api/stats/teams?season=${season}`, {
+    next: { revalidate: 300 },
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function getPlayerStatsBySeasons(seasons: string[]) {
+  const res = await fetch(`${API}/api/stats/players?seasons=${seasons.join(",")}`, {
+    next: { revalidate: 300 },
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function getTeamStatsBySeasons(seasons: string[]) {
+  const res = await fetch(`${API}/api/stats/teams?seasons=${seasons.join(",")}`, {
+    next: { revalidate: 300 },
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function getTeamStats(teams: string[]) {
+  const res = await fetch(`${API}/api/stats/teams?teams=${teams.join(",")}`, {
+    next: { revalidate: 300 },
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function getTeamList() {
+  const res = await fetch(`${API}/api/stats/teams`, {
+    next: { revalidate: 300 },
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
 export async function simulateLineup(players: { player_id: number; season: string; position?: string }[]) {
   const res = await fetch(`${API}/api/lineups/simulate`, {
     method: "POST",

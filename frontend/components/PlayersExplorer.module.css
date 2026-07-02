@@ -5,6 +5,12 @@
   min-height: calc(100vh - 40px);
 }
 
+@media (max-width: 480px) {
+  .page {
+    padding: 16px;
+  }
+}
+
 .controls {
   display: flex;
   flex-wrap: wrap;
@@ -15,6 +21,7 @@
 
 .filterRow {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 

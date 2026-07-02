@@ -158,3 +158,25 @@ export interface LineupResult {
   roster_features: LineupRosterFeatures;
   roster: LineupRosterEntry[];
 }
+
+export interface PlayerStatRow {
+  player_id: number;
+  player_name: string;
+  season: string;
+  team: string;
+  primary_position: string;
+  tier: Tier;
+  [stat: string]: string | number | Tier;
+}
+
+export interface TeamStatRow {
+  team: string;
+  season: string;
+  team_name: string;
+  [stat: string]: string | number;
+}
+
+export interface TeamListItem {
+  team: string;
+  team_name: string;
+}

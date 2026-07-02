@@ -8,6 +8,18 @@
   max-width: 520px;
 }
 
+@media (max-width: 480px) {
+  .wrap {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .btn {
+    padding: 0 10px;
+  }
+}
+
 .prompt {
   font-family: "Press Start 2P", monospace;
   color: var(--accent);

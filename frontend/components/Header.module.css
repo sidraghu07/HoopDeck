@@ -11,6 +11,13 @@
   border-bottom: 2px solid var(--border-muted);
 }
 
+@media (max-width: 480px) {
+  .header {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+}
+
 .brand {
   font-family: "Press Start 2P", monospace;
   font-size: 11px;
@@ -18,6 +25,8 @@
   color: var(--accent);
   text-decoration: none;
   transition: color 80ms;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .brand:hover {
@@ -39,6 +48,21 @@
   padding-bottom: 4px;
   border-bottom: 2px solid transparent;
   transition: color 80ms, border-color 80ms;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .brand {
+    font-size: 8px;
+  }
+
+  .nav {
+    gap: 10px;
+  }
+
+  .link {
+    font-size: 6px;
+  }
 }
 
 .link:hover {

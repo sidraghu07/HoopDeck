@@ -7,6 +7,7 @@ import styles from "./Header.module.css";
 const NAV_LINKS = [
   { href: "/players", label: "PLAYERS" },
   { href: "/lineups", label: "LINEUP SIM" },
+  { href: "/charts", label: "CHARTS" },
 ];
 
 export default function Header() {

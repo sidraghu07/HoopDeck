@@ -1,0 +1,258 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  min-height: calc(100vh - 40px);
+  background: var(--bg-void);
+  background-image: radial-gradient(circle at 20% 0%, var(--bg-surface-alt) 0%, var(--bg-void) 60%);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.toggleGroup {
+  display: flex;
+  border: 2px solid var(--border-muted);
+}
+
+.toggleBtn {
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  border: none;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: color 80ms, background 80ms;
+}
+
+.toggleBtn:hover {
+  color: var(--text-primary);
+}
+
+.toggleBtnActive {
+  color: var(--bg-void);
+  background: var(--accent);
+}
+
+.standaloneToggle {
+  border: 2px solid var(--border-muted);
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--bg-surface);
+  border: 2px solid var(--border-muted);
+  padding: 20px;
+}
+
+.controlsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.selectWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-void);
+  border: 2px solid var(--border-muted);
+  padding: 8px 12px;
+}
+
+.selectLabel {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.select {
+  background: transparent;
+  color: var(--text-primary);
+  font-family: "VT323", monospace;
+  font-size: 16px;
+  border: none;
+  outline: none;
+  max-width: 220px;
+}
+
+.select option {
+  background: var(--bg-surface);
+}
+
+.numberInput {
+  background: transparent;
+  color: var(--text-primary);
+  font-family: "VT323", monospace;
+  font-size: 16px;
+  border: none;
+  outline: none;
+  width: 48px;
+}
+
+.hint {
+  font-family: "VT323", monospace;
+  color: var(--text-muted);
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+.entityChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-void);
+  border: 2px solid var(--border-muted);
+  padding: 6px 10px;
+  font-family: "VT323", monospace;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.chipDot {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+}
+
+.chipRemove {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.chipRemove:hover {
+  color: #dc2626;
+}
+
+.input {
+  background: var(--bg-void);
+  border: 2px solid var(--accent);
+  color: var(--text-primary);
+  font-family: "VT323", monospace;
+  font-size: 18px;
+  padding: 10px 14px;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.resultsList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.resultRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-void);
+  border: 1px solid var(--border-muted);
+  color: var(--text-primary);
+  font-family: "VT323", monospace;
+  font-size: 16px;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 80ms;
+}
+
+.resultRow:hover {
+  border-color: var(--accent);
+}
+
+.resultMeta {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.chartBox {
+  position: relative;
+  margin-top: 8px;
+}
+
+.emptyChart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  font-family: "VT323", monospace;
+  color: var(--text-muted);
+  font-size: 18px;
+  letter-spacing: 1px;
+  border: 2px dashed var(--border-muted);
+}
+
+.highlightInput {
+  background: var(--bg-void);
+  border: 2px solid var(--border-muted);
+  color: var(--text-primary);
+  font-family: "VT323", monospace;
+  font-size: 16px;
+  padding: 8px 12px;
+  outline: none;
+  min-width: 180px;
+}
+
+.highlightInput::placeholder {
+  color: var(--text-muted);
+}
+
+.highlightInput:focus {
+  border-color: var(--accent);
+}
+
+.previewPopup {
+  position: absolute;
+  z-index: 20;
+}
+
+.previewClose {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 21;
+  background: var(--bg-void);
+  border: 1px solid var(--border-muted);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 5px;
+}
+
+.previewClose:hover {
+  color: #dc2626;
+}
+
+.previewCardWrap {
+  width: calc(240px * 0.55);
+  height: calc(300px * 0.55);
+  overflow: hidden;
+  cursor: pointer;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+}
