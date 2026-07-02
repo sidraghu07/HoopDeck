@@ -1,0 +1,157 @@
+.main {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-void);
+  background-image:
+    radial-gradient(ellipse at 30% 20%, rgba(107, 84, 153, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(232, 179, 57, 0.08) 0%, transparent 50%);
+  position: relative;
+  overflow: hidden;
+}
+
+.terminalBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.7;
+}
+
+.scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.15) 3px,
+    rgba(0, 0, 0, 0.15) 4px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 56px;
+  width: 100%;
+  max-width: 1240px;
+  padding: 40px 24px;
+}
+
+.heroLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+}
+
+.heroRight {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .hero {
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .heroLeft {
+    align-items: center;
+    text-align: center;
+  }
+
+  .title {
+    align-items: center;
+  }
+}
+
+.badge {
+  font-family: "VT323", monospace;
+  font-size: 18px;
+  color: var(--text-muted);
+  letter-spacing: 3px;
+  border: 1px solid var(--border-muted);
+  padding: 4px 14px;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  line-height: 1;
+}
+
+.sub {
+  font-family: "VT323", monospace;
+  font-size: 22px;
+  color: var(--text-muted);
+  letter-spacing: 3px;
+}
+
+.gallery {
+  box-shadow:
+    0 0 0 2px var(--bg-void),
+    0 0 30px rgba(232, 179, 57, 0.12);
+}
+
+.enterBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 14px;
+  color: var(--bg-void);
+  background: var(--accent);
+  border: none;
+  padding: 16px 28px;
+  box-shadow:
+    4px 4px 0 var(--accent-dim),
+    0 0 20px rgba(232, 179, 57, 0.4);
+  transition: transform 80ms steps(2), box-shadow 80ms steps(2);
+  text-decoration: none;
+}
+
+.enterBtn:hover {
+  transform: translate(2px, 2px);
+  box-shadow:
+    2px 2px 0 var(--accent-dim),
+    0 0 28px rgba(232, 179, 57, 0.6);
+}
+
+.enterBtn:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--accent-dim);
+}
+
+.btnCaret {
+  opacity: 0.7;
+}
+
+.btnCaret2 {
+  animation: blink 1s steps(1) infinite;
+  opacity: 0.7;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.footer {
+  font-family: "VT323", monospace;
+  font-size: 13px;
+  color: var(--border-strong);
+  letter-spacing: 2px;
+}

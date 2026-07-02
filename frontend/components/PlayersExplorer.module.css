@@ -1,0 +1,150 @@
+.page {
+  padding: 24px;
+  background: var(--bg-void);
+  background-image: radial-gradient(circle at 20% 0%, var(--bg-surface-alt) 0%, var(--bg-void) 60%);
+  min-height: 100vh;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.filterRow {
+  display: flex;
+  gap: 10px;
+}
+
+.selectWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-surface);
+  border: 2px solid var(--border-muted);
+  padding: 6px 10px;
+}
+
+.selectLabel {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  color: var(--text-muted);
+}
+
+.select {
+  background: transparent;
+  color: var(--text-primary);
+  font-family: "VT323", monospace;
+  font-size: 15px;
+  border: none;
+  outline: none;
+}
+
+.select option {
+  background: var(--bg-surface);
+}
+
+.count {
+  font-family: "VT323", monospace;
+  color: var(--text-muted);
+  font-size: 14px;
+  letter-spacing: 1px;
+  margin: 4px 0 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 28px 18px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+  max-width: 240px;
+  justify-content: center;
+}
+
+.tab {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  color: var(--c);
+  background: var(--bg-surface);
+  border: 2px solid var(--c);
+  padding: 4px 6px;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 80ms steps(2);
+}
+
+.tab:hover {
+  opacity: 0.85;
+}
+
+.tabActive {
+  opacity: 1;
+  background: var(--c);
+  color: var(--bg-void);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 32px 0 8px;
+}
+
+.pageBtn {
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  color: var(--accent);
+  background: var(--bg-surface);
+  border: 2px solid var(--accent);
+  padding: 8px 14px;
+  text-decoration: none;
+  transition: color 80ms steps(2), transform 80ms steps(2);
+}
+
+.pageBtn:hover {
+  color: var(--accent-bright);
+  transform: translateY(-1px);
+}
+
+.pageBtnDisabled {
+  opacity: 0.35;
+  pointer-events: none;
+  color: var(--border-muted);
+  border-color: var(--border-muted);
+}
+
+.pageInfo {
+  font-family: "VT323", monospace;
+  color: var(--text-muted);
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+.empty {
+  font-family: "Press Start 2P", monospace;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: center;
+  margin-top: 60px;
+}
+
+.loading {
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 150ms;
+}

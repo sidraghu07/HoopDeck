@@ -1,0 +1,193 @@
+.card {
+  --w: 240px;
+  width: var(--w);
+  font-family: "VT323", monospace;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 0 rgba(0, 0, 0, 0.5));
+  transition: transform 120ms steps(3);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover .frame {
+  box-shadow:
+    0 0 0 4px var(--bg-void),
+    0 0 28px var(--tier-glow),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.14);
+}
+
+.frame {
+  position: relative;
+  background: var(--tier-bg);
+  border: 4px solid var(--tier-border);
+  box-shadow:
+    0 0 0 4px var(--bg-void),
+    0 0 18px var(--tier-glow),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.08);
+  clip-path: polygon(
+    0 8px, 8px 8px, 8px 0,
+    calc(100% - 8px) 0, calc(100% - 8px) 8px, 100% 8px,
+    100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) 100%,
+    8px 100%, 8px calc(100% - 8px), 0 calc(100% - 8px)
+  );
+  padding: 10px 10px 12px;
+}
+
+.legendary .frame {
+  animation: shimmer 2.4s steps(6) infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { box-shadow: 0 0 0 4px var(--bg-void), 0 0 18px var(--tier-glow), inset 0 0 0 2px rgba(255,255,255,0.08); }
+  50% { box-shadow: 0 0 0 4px var(--bg-void), 0 0 28px var(--tier-glow), inset 0 0 0 2px rgba(255,255,255,0.2); }
+}
+
+.banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.tierLabel {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  color: var(--tier-border);
+}
+
+.editionTag {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.portrait {
+  position: relative;
+  height: 92px;
+  background: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.04) 0px,
+      rgba(255, 255, 255, 0.04) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.08), transparent 60%),
+    var(--bg-inset);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.playerImg {
+  object-fit: contain;
+  object-position: center bottom;
+  image-rendering: auto;
+}
+
+.initials {
+  font-family: "Press Start 2P", monospace;
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.overallBadge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: var(--bg-void);
+  border: 2px solid var(--tier-border);
+  padding: 2px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.overallNum {
+  font-family: "Press Start 2P", monospace;
+  font-size: 13px;
+  color: #fff;
+}
+
+.overallLbl {
+  font-size: 9px;
+  color: var(--tier-border);
+}
+
+.namePlate {
+  margin-bottom: 8px;
+}
+
+.name {
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subline {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.statCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 4px 0;
+}
+
+.statValue {
+  font-size: 16px;
+  color: #fff;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.ribbon {
+  display: flex;
+  justify-content: space-between;
+  border-top: 2px dashed rgba(255, 255, 255, 0.12);
+  padding-top: 6px;
+}
+
+.ribbonBit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ribbonLabel {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.ribbonValue {
+  font-size: 14px;
+  color: var(--tier-border);
+}

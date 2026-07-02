@@ -1,0 +1,29 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Node / Next.js
+node_modules/
+.next/
+*.tsbuildinfo
+next-env.d.ts
+
+# Raw NBA-API pulls and pipeline-generated artifacts — regenerate via
+# data/generate_player_dataset.py, data/generate_shot_dataset.py,
+# data/fit_weights.py, data/build_card_data.py. nba_shot_charts.csv alone is
+# over 1GB, well past GitHub's 100MB per-file push limit.
+data/csv/
+data/output/
+
+# OS
+.DS_Store
+
+# Local Claude Code config (hardcoded machine-specific paths)
+.claude/

@@ -1,0 +1,60 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  background: var(--bg-void);
+  border: 3px solid var(--accent);
+  box-shadow: 0 0 0 3px var(--bg-surface), inset 0 0 12px rgba(232, 179, 57, 0.15);
+  min-width: 280px;
+  max-width: 520px;
+}
+
+.prompt {
+  font-family: "Press Start 2P", monospace;
+  color: var(--accent);
+  font-size: 14px;
+  padding: 10px 8px 10px 14px;
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: "VT323", monospace;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  caret-color: var(--accent);
+  padding: 10px 8px;
+  min-width: 0;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.btn {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  color: var(--bg-void);
+  background: var(--accent);
+  border: none;
+  border-left: 3px solid var(--accent-dim);
+  padding: 0 14px;
+  height: 100%;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 80ms steps(2);
+  align-self: stretch;
+}
+
+.btn:hover {
+  background: var(--accent-bright);
+}
+
+.btn:active {
+  background: var(--accent-dim);
+  color: var(--text-primary);
+}

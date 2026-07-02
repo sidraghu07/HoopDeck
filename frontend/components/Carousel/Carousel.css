@@ -1,0 +1,196 @@
+.carousel-wrapper {
+  position: relative;
+}
+
+.carousel-container {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-muted);
+  border-radius: 24px;
+  padding: 16px;
+  background: var(--bg-surface);
+  --outer-r: 24px;
+  --p-distance: 12px;
+}
+
+.carousel-track {
+  display: flex;
+}
+
+.carousel-item {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  border: 1px solid var(--accent);
+  border-radius: calc(var(--outer-r) - var(--p-distance));
+  background-color: var(--bg-inset);
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.35);
+  overflow: hidden;
+  cursor: grab;
+}
+
+.carousel-item:active {
+  cursor: grabbing;
+}
+
+.carousel-item.bare {
+  border: none;
+  background-color: transparent;
+  box-shadow: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-container.round {
+  border: 1px solid var(--border-muted);
+}
+
+.carousel-item.round {
+  background-color: var(--bg-inset);
+  position: relative;
+  bottom: 0.1em;
+  border: 1px solid var(--accent);
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.carousel-item-header.round {
+  padding: 0;
+  margin: 0;
+}
+
+.carousel-indicators-container.round {
+  position: absolute;
+  z-index: 2;
+  bottom: 3em;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.carousel-item-header {
+  margin-bottom: 12px;
+  padding: 20px 20px 0;
+}
+
+.carousel-icon-container {
+  display: flex;
+  height: 64px;
+  width: 64px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: var(--bg-void);
+  border: 2px solid var(--accent);
+}
+
+.carousel-icon {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.carousel-item-content {
+  padding: 0 20px 20px;
+}
+
+.carousel-item-title {
+  margin-bottom: 4px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.carousel-item-description {
+  font-family: "VT323", monospace;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  font-family: "Press Start 2P", monospace;
+  font-size: 12px;
+  color: var(--accent);
+  background: var(--bg-void);
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(232, 179, 57, 0.3);
+  transition: color 80ms, transform 80ms steps(2), box-shadow 80ms;
+}
+
+.carousel-arrow:hover:not(:disabled) {
+  color: var(--accent-bright);
+  box-shadow: 0 0 16px rgba(232, 179, 57, 0.5);
+}
+
+.carousel-arrow:active:not(:disabled) {
+  transform: translateY(-50%) scale(0.92);
+}
+
+.carousel-arrow:disabled {
+  color: var(--border-muted);
+  border-color: var(--border-muted);
+  box-shadow: none;
+  cursor: default;
+}
+
+.carousel-arrow-prev {
+  left: -48px;
+}
+
+.carousel-arrow-next {
+  right: -48px;
+}
+
+.carousel-indicators-container {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+.carousel-indicators {
+  margin-top: 16px;
+  display: flex;
+  width: 150px;
+  justify-content: space-between;
+  padding: 0 32px;
+}
+
+.carousel-indicator {
+  height: 8px;
+  width: 8px;
+  border: none;
+  padding: 0;
+  appearance: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+
+.carousel-indicator:focus-visible {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: 2px;
+}
+
+.carousel-indicator.active {
+  background-color: var(--accent);
+}
+
+.carousel-indicator.inactive {
+  background-color: var(--border-muted);
+}
