@@ -3,7 +3,7 @@ import styles from "./Footer.module.css";
 export default function Footer() {
   return (
     <footer className={styles.footer}>
-      <a
+      {/* <a
         href="https://github.com/sidraghu07/HoopDeck"
         target="_blank"
         rel="noopener noreferrer"
@@ -24,7 +24,7 @@ export default function Footer() {
           />
         </svg>
         VIEW ON GITHUB
-      </a>
+      </a> */}
       <p className={styles.disclaimer}>
         HoopDeck is not affiliated with, endorsed by, or sponsored by the NBA. Player stats,
         names, and images are the property of their respective owners and are used here for
