@@ -7,7 +7,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "HoopDeck",
-  description: "Pixel-art NBA player cards database",
+  description: "An Easy Way to Analyze Your Favorite Players",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
