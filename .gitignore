@@ -20,7 +20,10 @@ next-env.d.ts
 # data/fit_weights.py, data/build_card_data.py. nba_shot_charts.csv alone is
 # over 1GB, well past GitHub's 100MB per-file push limit.
 data/csv/
-data/output/
+data/output/*
+# lineup_model.json is a small fitted-model artifact the API loads at
+# startup (api/routers/lineups.py) — keep it tracked despite the rule above.
+!data/output/lineup_model.json
 
 # OS
 .DS_Store
