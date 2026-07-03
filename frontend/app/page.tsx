@@ -56,7 +56,7 @@ export default async function HomePage() {
         <div className={styles.heroLeft}>
           <h1 className={styles.title}>
             <Shuffle
-              text="NBA"
+              text="HOOP"
               tag="span"
               duration={0.4}
               shuffleDirection="right"
@@ -71,7 +71,7 @@ export default async function HomePage() {
               }}
             />
             <Shuffle
-              text="CARDS"
+              text="DECK"
               tag="span"
               duration={0.45}
               shuffleDirection="right"
