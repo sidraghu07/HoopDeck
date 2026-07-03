@@ -554,9 +554,9 @@ for _season_idx_list in _by_player.values():
                 cards[_idx]["ratings"] = dict(_card["ratings"], overall=_blended)
         _prev_raw = _raw
 
-_OVR_TIER_FLOOR = 80
+OVR_TIER_FLOOR = 80
 for _card in cards:
-    if _card["tier"] in ("Franchise Player", "All-Star") and _card["ratings"]["overall"] < _OVR_TIER_FLOOR:
+    if _card["tier"] in ("Franchise Player", "All-Star") and _card["ratings"]["overall"] < OVR_TIER_FLOOR:
         _card["tier"] = "Starter"
 
 seasons_list = sorted({c["season"] for c in cards})
