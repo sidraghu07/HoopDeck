@@ -32,6 +32,7 @@ export default function LineupBuilder() {
   const [loadingSeasons, setLoadingSeasons] = useState(false);
   const [slots, setSlots] = useState<(PlayerSeason | null)[]>(Array(TOTAL_SLOTS).fill(null));
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [result, setResult] = useState<LineupResult | null>(null);
   const [showResultModal, setShowResultModal] = useState(false);
   const [simLoading, setSimLoading] = useState(false);
@@ -81,6 +82,7 @@ export default function LineupBuilder() {
       return next;
     });
     setResult(null);
+    setSelectedSlot(null);
   }
 
   function bestSlotFor(position: string): number {
@@ -108,6 +110,7 @@ export default function LineupBuilder() {
       return next;
     });
     setResult(null);
+    setSelectedSlot((prev) => (prev === index ? null : prev));
   }
 
   function swapSlots(a: number, b: number) {
@@ -118,6 +121,19 @@ export default function LineupBuilder() {
       return next;
     });
     setResult(null);
+  }
+
+  function onSlotClick(index: number) {
+    if (selectedSlot === null) {
+      if (slots[index]) setSelectedSlot(index);
+      return;
+    }
+    if (selectedSlot === index) {
+      setSelectedSlot(null);
+      return;
+    }
+    swapSlots(selectedSlot, index);
+    setSelectedSlot(null);
   }
 
   function setWholeCardDragImage(e: React.DragEvent) {
@@ -295,6 +311,10 @@ export default function LineupBuilder() {
           {filledCount < 5 && <span className={styles.needMore}> — NEED AT LEAST 5</span>}
         </div>
 
+        {selectedSlot !== null && (
+          <div className={styles.hint}>CARD SELECTED — CLICK ANOTHER SLOT TO SWAP, OR CLICK IT AGAIN TO CANCEL</div>
+        )}
+
         <div className={styles.starterRow}>
           {slots.slice(0, STARTER_LABELS.length).map((entry, i) => (
             <Slot
@@ -303,12 +323,14 @@ export default function LineupBuilder() {
               label={slotLabel(i)}
               entry={entry}
               isDragOver={dragOverSlot === i}
+              isSelected={selectedSlot === i}
               onDragStart={onSlotDragStart}
               onDragOver={onSlotDragOver}
               onDragEnter={() => setDragOverSlot(i)}
               onDragLeave={() => setDragOverSlot((prev) => (prev === i ? null : prev))}
               onDrop={onSlotDrop}
               onRemove={removeSlot}
+              onSlotClick={onSlotClick}
             />
           ))}
         </div>
@@ -324,12 +346,14 @@ export default function LineupBuilder() {
                 label={slotLabel(index)}
                 entry={entry}
                 isDragOver={dragOverSlot === index}
+                isSelected={selectedSlot === index}
                 onDragStart={onSlotDragStart}
                 onDragOver={onSlotDragOver}
                 onDragEnter={() => setDragOverSlot(index)}
                 onDragLeave={() => setDragOverSlot((prev) => (prev === index ? null : prev))}
                 onDrop={onSlotDrop}
                 onRemove={removeSlot}
+                onSlotClick={onSlotClick}
               />
             );
           })}
@@ -364,31 +388,36 @@ function Slot({
   label,
   entry,
   isDragOver,
+  isSelected,
   onDragStart,
   onDragOver,
   onDragEnter,
   onDragLeave,
   onDrop,
   onRemove,
+  onSlotClick,
 }: {
   index: number;
   label: string;
   entry: PlayerSeason | null;
   isDragOver: boolean;
+  isSelected: boolean;
   onDragStart: (e: React.DragEvent, index: number) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDragEnter: () => void;
   onDragLeave: () => void;
   onDrop: (e: React.DragEvent, index: number) => void;
   onRemove: (index: number) => void;
+  onSlotClick: (index: number) => void;
 }) {
   return (
     <div
-      className={`${styles.slot} ${entry ? styles.slotFilled : styles.slotEmpty} ${isDragOver ? styles.slotDragOver : ""}`}
+      className={`${styles.slot} ${entry ? styles.slotFilled : styles.slotEmpty} ${isDragOver ? styles.slotDragOver : ""} ${isSelected ? styles.slotSelected : ""}`}
       onDragOver={onDragOver}
       onDragEnter={onDragEnter}
       onDragLeave={onDragLeave}
       onDrop={(e) => onDrop(e, index)}
+      onClick={() => onSlotClick(index)}
     >
       <span className={styles.slotLabel}>{label}</span>
       {entry ? (
@@ -403,7 +432,10 @@ function Slot({
           <button
             type="button"
             className={styles.slotRemove}
-            onClick={() => onRemove(index)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(index);
+            }}
             aria-label={`Remove ${entry.player_name}`}
           >
             ✕

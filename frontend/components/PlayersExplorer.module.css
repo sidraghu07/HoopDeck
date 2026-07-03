@@ -64,7 +64,24 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  justify-items: center;
   gap: 28px 18px;
+}
+
+.cardWrap {
+  display: flex;
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 16px 10px;
+  }
+
+  .cardWrap {
+    width: calc(240px * 0.65);
+    height: calc(300px * 0.65);
+  }
 }
 
 .stack {

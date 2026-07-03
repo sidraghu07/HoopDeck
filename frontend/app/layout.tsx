@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { pressStart2P, vt323 } from "@/lib/fonts";
 import ClickSparkGate from "@/components/ClickSpark/ClickSparkGate";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Basketball Cards",
+  title: "HoopDeck",
   description: "Pixel-art NBA player cards database",
 };
 
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ClickSparkGate>
           <Header />
           {children}
+          <Footer />
         </ClickSparkGate>
       </body>
     </html>

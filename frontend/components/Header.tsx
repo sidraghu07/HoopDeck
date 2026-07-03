@@ -16,7 +16,7 @@ export default function Header() {
   return (
     <header className={styles.header}>
       <Link href="/" className={styles.brand}>
-        NBA CARDS
+        HOOPDECK
       </Link>
       <nav className={styles.nav}>
         {NAV_LINKS.map((l) => (

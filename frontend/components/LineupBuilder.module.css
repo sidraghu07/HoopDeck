@@ -174,11 +174,17 @@
   border-style: solid;
   border-color: var(--border-strong);
   background: var(--bg-void);
+  cursor: pointer;
 }
 
 .slotDragOver {
   border-color: var(--accent);
   background: rgba(232, 179, 57, 0.08);
+}
+
+.slotSelected {
+  border-color: var(--accent-bright);
+  box-shadow: 0 0 0 2px var(--accent-bright), 0 0 12px rgba(232, 179, 57, 0.5);
 }
 
 .slotLabel {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CareerCard, PlayerSeasonCard, Tier } from "@/lib/types";
 import { TIER_STYLE } from "@/lib/tiers";
@@ -38,6 +39,16 @@ export default function PlayersExplorer({
   page,
   totalPages,
 }: Props) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 600px)");
+    setIsMobile(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
   function pageUrl(target: number) {
     const params = new URLSearchParams();
     params.set("season", season);
@@ -74,22 +85,26 @@ export default function PlayersExplorer({
         <div className={styles.grid}>
           {isAllSeasons
             ? careerCards.map((g) => (
-                <PlayerCard
-                  key={g.player_id}
-                  mode="career"
-                  data={g.career}
-                  player_name={g.player_name}
-                  player_id={g.player_id}
-                  onClick={() => { window.location.href = `/players/${g.player_id}`; }}
-                />
+                <div key={g.player_id} className={styles.cardWrap}>
+                  <PlayerCard
+                    mode="career"
+                    data={g.career}
+                    player_name={g.player_name}
+                    player_id={g.player_id}
+                    onClick={() => { window.location.href = `/players/${g.player_id}`; }}
+                    scale={isMobile ? 0.65 : undefined}
+                  />
+                </div>
               ))
             : seasonCards.map((p) => (
-                <PlayerCard
-                  key={`${p.player_id}-${p.season}`}
-                  mode="season"
-                  data={p}
-                  onClick={() => { window.location.href = `/players/${p.player_id}?season=${p.season}`; }}
-                />
+                <div key={`${p.player_id}-${p.season}`} className={styles.cardWrap}>
+                  <PlayerCard
+                    mode="season"
+                    data={p}
+                    onClick={() => { window.location.href = `/players/${p.player_id}?season=${p.season}`; }}
+                    scale={isMobile ? 0.65 : undefined}
+                  />
+                </div>
               ))}
         </div>
 
