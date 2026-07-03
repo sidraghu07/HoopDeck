@@ -101,6 +101,10 @@ export default async function HomePage() {
             SIMULATE A LINEUP
           </Link>
 
+          <Link href="/charts" className={styles.secondaryBtn}>
+            CREATE A CHART
+          </Link>
+
           <div className={styles.footer}>
             <span>All Stats from 1996-2026</span>
           </div>
