@@ -79,6 +79,25 @@ def _career_card(r: dict) -> dict:
 
 MAX_PAGE_SIZE = 200
 
+SORT_COLUMNS_SEASON = {
+    "overall": "rating_overall",
+    "pts": "pg_pts",
+    "reb": "pg_reb",
+    "ast": "pg_ast",
+    "stl": "pg_stl",
+    "blk": "pg_blk",
+    "min": "pg_min",
+}
+SORT_COLUMNS_CAREER = {
+    "overall": "avg_overall",
+    "pts": "avg_pts",
+    "reb": "avg_reb",
+    "ast": "avg_ast",
+    "stl": "avg_stl",
+    "blk": "avg_blk",
+    "min": "avg_min",
+}
+
 
 @router.get("/api/players")
 def get_players(
@@ -88,9 +107,12 @@ def get_players(
     name: str | None = None,
     page: int = 1,
     page_size: int = 60,
+    sort: str = "overall",
+    dir: str = "desc",
 ):
     page = max(1, page)
     page_size = max(1, min(page_size, MAX_PAGE_SIZE))
+    sort_dir = "ASC" if dir == "asc" else "DESC"
 
     with pool.connection() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -100,6 +122,7 @@ def get_players(
             clauses, params = _build_filters(tier, position, name)
 
             if season and season != "ALL":
+                sort_col = SORT_COLUMNS_SEASON.get(sort, SORT_COLUMNS_SEASON["overall"])
                 clauses.append("season = %(season)s")
                 params["season"] = season
                 where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
@@ -110,13 +133,14 @@ def get_players(
                            rating_impact, pg_pts, pg_reb, pg_ast, pg_stl, pg_blk, pg_min
                     FROM player_seasons
                     {where}
-                    ORDER BY rating_overall DESC
+                    ORDER BY {sort_col} {sort_dir}
                     """,
                     params,
                 )
                 players = [_season_card(r) for r in cur.fetchall()]
                 return {"players": players, "meta": {"seasons": seasons, "total": len(players)}}
 
+            sort_col = SORT_COLUMNS_CAREER.get(sort, SORT_COLUMNS_CAREER["overall"])
             where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
             offset = (page - 1) * page_size
             cur.execute(
@@ -153,7 +177,7 @@ def get_players(
                 )
                 SELECT agg.*, best_tier.best_tier, count(*) OVER () AS total_count
                 FROM agg JOIN best_tier USING (player_id)
-                ORDER BY avg_overall DESC
+                ORDER BY {sort_col} {sort_dir}
                 LIMIT %(limit)s OFFSET %(offset)s
                 """,
                 {**params, "limit": page_size, "offset": offset},

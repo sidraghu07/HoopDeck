@@ -89,7 +89,6 @@ def zscore(s: pd.Series) -> pd.Series:
 
 def scrape_bref_positions(year: int, season_str: str) -> pd.DataFrame:
     url = f"https://www.basketball-reference.com/leagues/NBA_{year}_per_game.html"
-    print(f"  GET {url}")
 
     resp = requests.get(url, headers=HEADERS, timeout=20)
     resp.raise_for_status()
@@ -116,16 +115,6 @@ def scrape_bref_positions(year: int, season_str: str) -> pd.DataFrame:
     df = df[df["POSITION"].isin(VALID_POSITIONS)].copy()
     df["NAME_NORM"] = df["PLAYER_NAME"].apply(normalize_name)
     return df
-
-
-def debug_player(name_fragment: str, bref_df: pd.DataFrame) -> None:
-    frag = normalize_name(name_fragment)
-    hits = bref_df[bref_df["NAME_NORM"].str.contains(frag, na=False)]
-    if hits.empty:
-        print(f"    debug_player('{name_fragment}'): no matches found on BBRef at all")
-    else:
-        print(f"    debug_player('{name_fragment}'):")
-        print(hits[["PLAYER_NAME", "SEASON", "POSITION", "NAME_NORM"]].to_string(index=False))
 
 
 def add_player_tiers(df: pd.DataFrame) -> pd.DataFrame:

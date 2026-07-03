@@ -627,38 +627,3 @@ for c in top5:
           f"| Avail={avail['availability_pct']}  "
           f"| Hot zone: {c['hottest_zone']}")
 
-print("\n── SGA season progression ──")
-sga = [c for c in cards if c["player_name"] == "Shai Gilgeous-Alexander"]
-for c in sorted(sga, key=lambda x: x["season"]):
-    r = c["ratings"]
-    print(f"  {c['season']}  Tier={c['tier']}  OVR={r['overall']}  "
-          f"SHT={r['scoring']} PLY={r['playmaking']} DEF={r['defense']} IMP={r['impact']}  "
-          f"| Hot zone: {c['hottest_zone']}")
-
-
-def debug_player(name, season=None):
-    rows = stats_f[stats_f["PLAYER_NAME"] == name]
-    if season:
-        rows = rows[rows["SEASON"] == season]
-    for _, row in rows.iterrows():
-        p        = league_pools[row["SEASON"]]
-        pos_list = row["POSITION_LIST"]
-        weights  = get_position_weights(pos_list)
-        labels   = ["scr", "ply", "def", "imp", "avl"]
-        w_str    = "  ".join(f"{l}={v}" for l, v in zip(labels, weights))
-        print(f"\n{name} — {row['SEASON']}  pos={pos_list}  tier={row.get('TIER')}  weights=({w_str})")
-        p_local = p
-        print(f"  TS%={row['TS_PCT']:.3f}  EFG%={row['EFG_PCT']:.3f}  3P%={row['FG3_PCT']:.3f}  "
-              f"UAST%={row.get('PCT_UAST_FGM','N/A')}")
-        print(f"  AST%={row['AST_PCT']:.3f}  AST/TO={row['AST_TO']:.2f}  TOV%={row['E_TOV_PCT']:.3f}")
-        print(f"  DEF_RTG={row['DEF_RATING']:.1f}  DREB%={row['DREB_PCT']:.3f}  STL={row['STL']:.1f}  BLK={row['BLK']:.1f}")
-        print(f"  NET_RTG={row['NET_RATING']:.1f}  PIE={row['PIE']:.3f}  PTS={row['PTS']:.1f}  "
-              f"CLUTCH_PM={row.get('CLUTCH_PLUS_MINUS','N/A')}")
-        r = ratings_from_row(row, p, pos_list)
-        print(f"  → OVR={r['overall']}  SHT={r['scoring']} PLY={r['playmaking']} "
-              f"DEF={r['defense']} IMP={r['impact']}")
-
-
-debug_player("Jamal Murray",          "2025-26")
-debug_player("Anthony Edwards",       "2025-26")
-debug_player("Nikola Jokić",          "2025-26")

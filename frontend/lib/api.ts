@@ -12,6 +12,8 @@ export async function getPlayers(filters?: {
   position?: string;
   name?: string;
   page?: number;
+  sort?: string;
+  dir?: string;
 }) {
   const clean: Record<string, string> = {};
   for (const [k, v] of Object.entries(filters ?? {})) {

@@ -6,11 +6,21 @@ import PlayersExplorer from "@/components/PlayersExplorer";
 const DEFAULT_SEASON = "2025-26";
 
 interface PageProps {
-  searchParams: Promise<{ season?: string; name?: string; tier?: string; position?: string; page?: string }>;
+  searchParams: Promise<{
+    season?: string;
+    name?: string;
+    tier?: string;
+    position?: string;
+    page?: string;
+    sort?: string;
+    dir?: string;
+  }>;
 }
 
+const SORT_FIELDS = ["overall", "pts", "reb", "ast", "stl", "blk", "min"];
+
 export default async function PlayersPage({ searchParams }: PageProps) {
-  const { season, name, tier, position, page } = await searchParams;
+  const { season, name, tier, position, page, sort, dir } = await searchParams;
 
   if (!season) {
     redirect(`/players?season=${DEFAULT_SEASON}`);
@@ -18,6 +28,8 @@ export default async function PlayersPage({ searchParams }: PageProps) {
 
   const isAllSeasons = season === "ALL";
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
+  const currentSort = SORT_FIELDS.includes(sort ?? "") ? (sort as string) : "overall";
+  const currentDir = dir === "asc" ? "asc" : "desc";
 
   const data = await getPlayers({
     season,
@@ -25,6 +37,8 @@ export default async function PlayersPage({ searchParams }: PageProps) {
     tier,
     position,
     page: isAllSeasons ? currentPage : undefined,
+    sort: currentSort,
+    dir: currentDir,
   });
 
   const seasonCards: PlayerSeasonCard[] = isAllSeasons ? [] : (data?.players ?? []);
@@ -57,6 +71,8 @@ export default async function PlayersPage({ searchParams }: PageProps) {
       positions={positions}
       page={currentPage}
       totalPages={data?.meta?.total_pages ?? 1}
+      sort={currentSort}
+      dir={currentDir}
     />
   );
 }

@@ -10,6 +10,13 @@ import styles from "./PlayersExplorer.module.css";
 
 const ALL_TIERS: Tier[] = ["Franchise Player", "All-Star", "Starter", "Rotation", "Bench"];
 
+const SORT_FIELDS = ["overall", "pts", "reb", "ast", "stl", "blk", "min"];
+const SORT_LABELS: Record<string, string> = {
+  overall: "OVR", pts: "PTS", reb: "REB", ast: "AST", stl: "STL", blk: "BLK", min: "MIN",
+};
+const SORT_DIRS = ["desc", "asc"];
+const SORT_DIR_LABELS: Record<string, string> = { desc: "HIGH → LOW", asc: "LOW → HIGH" };
+
 interface Props {
   seasonCards: PlayerSeasonCard[];
   careerCards: CareerCard[];
@@ -23,6 +30,8 @@ interface Props {
   positions: string[];
   page: number;
   totalPages: number;
+  sort: string;
+  dir: string;
 }
 
 export default function PlayersExplorer({
@@ -38,6 +47,8 @@ export default function PlayersExplorer({
   positions,
   page,
   totalPages,
+  sort,
+  dir,
 }: Props) {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -55,6 +66,8 @@ export default function PlayersExplorer({
     if (name) params.set("name", name);
     if (tier) params.set("tier", tier);
     if (position) params.set("position", position);
+    if (sort !== "overall") params.set("sort", sort);
+    if (dir !== "desc") params.set("dir", dir);
     if (target > 1) params.set("page", String(target));
     return `/players?${params.toString()}`;
   }
@@ -65,8 +78,8 @@ export default function PlayersExplorer({
         <form method="GET" action="/players" className={styles.controls}>
           <SearchBar defaultValue={name} />
           <div className={styles.filterRow}>
-            <PixelSelect label="SEASON"   name="season"   value={season}   options={seasons} emptyLabel={undefined} allLabel="ALL SEASONS" />
-            <PixelSelect
+            <FilterSelect label="SEASON"   name="season"   value={season}   options={seasons} emptyLabel={undefined} allLabel="ALL SEASONS" />
+            <FilterSelect
               label="TIER"
               name="tier"
               value={tier}
@@ -74,7 +87,23 @@ export default function PlayersExplorer({
               emptyLabel="ALL TIERS"
               labelFor={(t) => TIER_STYLE[t as Tier]?.label ?? t}
             />
-            <PixelSelect label="POS"      name="position" value={position} options={positions} emptyLabel="ALL POS" />
+            <FilterSelect label="POS"      name="position" value={position} options={positions} emptyLabel="ALL POS" />
+            <FilterSelect
+              label="SORT"
+              name="sort"
+              value={sort}
+              options={SORT_FIELDS}
+              emptyLabel={undefined}
+              labelFor={(s) => SORT_LABELS[s] ?? s}
+            />
+            <FilterSelect
+              label="DIR"
+              name="dir"
+              value={dir}
+              options={SORT_DIRS}
+              emptyLabel={undefined}
+              labelFor={(d) => SORT_DIR_LABELS[d] ?? d}
+            />
           </div>
         </form>
 
@@ -136,7 +165,7 @@ export default function PlayersExplorer({
   );
 }
 
-function PixelSelect({
+function FilterSelect({
   label,
   name,
   value,

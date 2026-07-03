@@ -7,7 +7,6 @@ all_shot_data = []
 
 for row in final_df.itertuples(index=False):
     try:
-        print(row.SEASON)
         shot_data = shotchartdetail.ShotChartDetail(
             team_id=row.TEAM_ID,
             player_id=row.PLAYER_ID,
