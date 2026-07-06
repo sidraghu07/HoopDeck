@@ -39,6 +39,7 @@ def _season_card(r: dict) -> dict:
         "team": r["team"],
         "primary_position": r["primary_position"],
         "tier": r["tier"],
+        "has_photo": r["has_photo"],
         "ratings": {
             "overall": r["rating_overall"],
             "scoring": r["rating_scoring"],
@@ -63,6 +64,7 @@ def _career_card(r: dict) -> dict:
             "seasonsPlayed": r["seasons_played"],
             "teams": r["teams"],
             "primary_position": r["primary_position"],
+            "has_photo": r["has_photo"],
             "per_game": {
                 "pts": round(r["avg_pts"], 1), "reb": round(r["avg_reb"], 1),
                 "ast": round(r["avg_ast"], 1), "stl": round(r["avg_stl"], 1),
@@ -128,10 +130,12 @@ def get_players(
                 where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
                 cur.execute(
                     f"""
-                    SELECT player_id, season, player_name, team, primary_position, tier,
+                    SELECT player_seasons.player_id, season, player_name, team, primary_position, tier,
                            rating_overall, rating_scoring, rating_playmaking, rating_defense,
-                           rating_impact, pg_pts, pg_reb, pg_ast, pg_stl, pg_blk, pg_min
+                           rating_impact, pg_pts, pg_reb, pg_ast, pg_stl, pg_blk, pg_min,
+                           COALESCE(player_photos.has_photo, true) AS has_photo
                     FROM player_seasons
+                    LEFT JOIN player_photos ON player_photos.player_id = player_seasons.player_id
                     {where}
                     ORDER BY {sort_col} {sort_dir}
                     """,
@@ -146,13 +150,17 @@ def get_players(
             cur.execute(
                 f"""
                 WITH filtered AS (
-                    SELECT * FROM player_seasons {where}
+                    SELECT player_seasons.*, COALESCE(player_photos.has_photo, true) AS has_photo
+                    FROM player_seasons
+                    LEFT JOIN player_photos ON player_photos.player_id = player_seasons.player_id
+                    {where}
                 ),
                 agg AS (
                     SELECT
                         player_id,
                         (array_agg(player_name ORDER BY season DESC))[1] AS player_name,
                         (array_agg(primary_position ORDER BY season DESC))[1] AS primary_position,
+                        (array_agg(has_photo))[1] AS has_photo,
                         array_agg(DISTINCT team) AS teams,
                         count(*) AS seasons_played,
                         max(rating_overall) AS best_overall,
@@ -201,13 +209,19 @@ def get_players(
 def get_player(player_id: int, season: str | None = None):
     with pool.connection() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            clauses = ["player_id = %(player_id)s"]
+            clauses = ["player_seasons.player_id = %(player_id)s"]
             params: dict = {"player_id": player_id}
             if season:
                 clauses.append("season = %(season)s")
                 params["season"] = season
             cur.execute(
-                f"SELECT * FROM player_seasons WHERE {' AND '.join(clauses)} ORDER BY season",
+                f"""
+                SELECT player_seasons.*, COALESCE(player_photos.has_photo, true) AS has_photo
+                FROM player_seasons
+                LEFT JOIN player_photos ON player_photos.player_id = player_seasons.player_id
+                WHERE {' AND '.join(clauses)}
+                ORDER BY season
+                """,
                 params,
             )
             season_rows = cur.fetchall()
@@ -242,6 +256,7 @@ def get_player(player_id: int, season: str | None = None):
             "positions": r["positions"],
             "primary_position": r["primary_position"],
             "tier": r["tier"],
+            "has_photo": r["has_photo"],
             "availability": {
                 "games_played": r["games_played"],
                 "scheduled_games": r["scheduled_games"],

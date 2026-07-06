@@ -171,6 +171,7 @@ function flatRowToSeasonCard(row: PlayerStatRow): PlayerSeasonCard {
     team: row.team,
     primary_position: row.primary_position,
     tier: row.tier,
+    has_photo: true,
     ratings: {
       overall: row.rating_overall as number,
       scoring: row.rating_scoring as number,

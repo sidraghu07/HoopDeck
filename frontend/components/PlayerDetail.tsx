@@ -55,7 +55,7 @@ export default function PlayerDetail({ seasons, active }: Props) {
         </div>
 
         <div className={styles.portrait}>
-          {!imgFailed ? (
+          {active.has_photo && !imgFailed ? (
             <Image
               src={imgUrl}
               alt={active.player_name}

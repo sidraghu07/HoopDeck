@@ -23,6 +23,7 @@ export interface PlayerSeason {
   positions: string[];
   primary_position: string;
   tier: Tier;
+  has_photo: boolean;
   availability: {
     games_played: number;
     scheduled_games: number;
@@ -77,6 +78,7 @@ export interface PlayerSeasonCard {
   team: string;
   primary_position: string;
   tier: Tier;
+  has_photo: boolean;
   ratings: {
     overall: number;
     scoring: number;
@@ -106,6 +108,7 @@ export interface CareerSummary {
   seasonsPlayed: number;
   teams: string[];
   primary_position: string;
+  has_photo: boolean;
   per_game: {
     pts: number;
     reb: number;

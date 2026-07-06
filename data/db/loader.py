@@ -1,6 +1,18 @@
 import psycopg
 
 
+def load_player_photos(rows: list[tuple[int, bool]], database_url: str) -> None:
+    print("\nLoading player_photos into Postgres…")
+    with psycopg.connect(database_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute("TRUNCATE TABLE player_photos")
+            with cur.copy("COPY player_photos (player_id, has_photo) FROM STDIN") as copy:
+                for player_id, has_photo in rows:
+                    copy.write_row((player_id, has_photo))
+        conn.commit()
+    print(f"  ✓ Loaded {len(rows):,} player photo flags into Postgres")
+
+
 def load_team_seasons(teams_df, database_url: str) -> None:
     print("\nLoading team_seasons into Postgres…")
     with psycopg.connect(database_url) as conn:

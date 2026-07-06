@@ -33,6 +33,7 @@ export default function PlayerCard(
 
   const name = props.mode === "season" ? props.data.player_name : props.player_name;
   const playerId = props.mode === "season" ? props.data.player_id : props.player_id;
+  const hasPhoto = props.data.has_photo;
   const overall = props.mode === "season" ? props.data.ratings.overall : props.data.bestOverall;
   const position = props.mode === "season" ? props.data.primary_position : props.data.primary_position;
   const team = props.mode === "season" ? props.data.team : props.data.teams.join(" / ");
@@ -65,7 +66,7 @@ export default function PlayerCard(
           <span className={styles.editionTag}>{tag}</span>
         </div>
 
-        <PlayerPortrait name={name} playerId={playerId} overall={overall} />
+        <PlayerPortrait name={name} playerId={playerId} overall={overall} hasPhoto={hasPhoto} />
 
         <div className={styles.namePlate}>
           <div className={styles.name} title={name}>
@@ -112,10 +113,12 @@ function PlayerPortrait({
   name,
   playerId,
   overall,
+  hasPhoto,
 }: {
   name: string;
   playerId: number;
   overall: number;
+  hasPhoto: boolean;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
   const initials = name
@@ -128,7 +131,7 @@ function PlayerPortrait({
 
   return (
     <div className={styles.portrait}>
-      {!imgFailed ? (
+      {hasPhoto && !imgFailed ? (
         <Image
           src={imgUrl}
           alt={name}
