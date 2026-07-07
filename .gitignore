@@ -21,9 +21,10 @@ next-env.d.ts
 # over 1GB, well past GitHub's 100MB per-file push limit.
 data/csv/
 data/output/*
-# lineup_model.json is a small fitted-model artifact the API loads at
-# startup (api/routers/lineups.py) — keep it tracked despite the rule above.
-!data/output/lineup_model.json
+# lineup_model_{nba,wnba}.json are small fitted-model artifacts the API loads
+# at startup (api/routers/lineups.py) — keep them tracked despite the rule above.
+!data/output/lineup_model_nba.json
+!data/output/lineup_model_wnba.json
 
 # OS
 .DS_Store

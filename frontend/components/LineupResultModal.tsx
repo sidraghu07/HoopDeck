@@ -60,17 +60,30 @@ export default function LineupResultModal({
             <span>OVR</span>
             <span>MIN</span>
           </div>
-          {result.roster.map((r) => (
-            <div key={`${r.player_id}-${r.season}`} className={styles.rosterRow}>
-              <span className={styles.rosterPos}>{r.assigned_position ?? r.primary_position}</span>
-              <span className={styles.rosterName}>{r.player_name}</span>
-              <span className={styles.rosterSeason}>
-                {r.season} · {r.team}
-              </span>
-              <span className={styles.rosterOvr}>{r.rating_overall}</span>
-              <span className={styles.rosterMin}>{r.assumed_minutes}</span>
-            </div>
-          ))}
+          {result.roster.map((r) => {
+            const outOfPosition = r.out_of_position_penalty > 0;
+            return (
+              <div key={`${r.player_id}-${r.season}`} className={styles.rosterRow}>
+                <span
+                  className={`${styles.rosterPos} ${outOfPosition ? styles.rosterPosWarn : ""}`}
+                  title={outOfPosition ? `Out of position — natural position is ${r.primary_position}` : undefined}
+                >
+                  {r.assigned_position ?? r.primary_position}
+                </span>
+                <span className={styles.rosterName}>{r.player_name}</span>
+                <span className={styles.rosterSeason}>
+                  {r.season} · {r.team}
+                </span>
+                <span className={styles.rosterOvr}>
+                  {r.rating_overall}
+                  {outOfPosition && (
+                    <span className={styles.rosterOvrPenalty}> -{r.out_of_position_penalty}</span>
+                  )}
+                </span>
+                <span className={styles.rosterMin}>{r.assumed_minutes}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

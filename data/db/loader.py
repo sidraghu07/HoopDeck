@@ -15,16 +15,22 @@ def load_player_photos(rows: list[tuple[int, bool]], database_url: str) -> None:
 
 def load_team_seasons(teams_df, database_url: str) -> None:
     print("\nLoading team_seasons into Postgres…")
+    leagues = teams_df["LEAGUE"].unique().tolist() if "LEAGUE" in teams_df.columns else ["NBA"]
     with psycopg.connect(database_url) as conn:
         with conn.cursor() as cur:
-            cur.execute("TRUNCATE TABLE team_seasons")
+            # Delete only the league(s) present in this dataframe rather than
+            # truncating the whole table — fit_lineup_model.py runs once per
+            # league, and a blanket TRUNCATE would wipe out the other
+            # league's already-loaded rows.
+            cur.execute("DELETE FROM team_seasons WHERE league = ANY(%(leagues)s)", {"leagues": leagues})
             with cur.copy(
-                "COPY team_seasons (team, season, team_name, games_played, wins, losses, "
+                "COPY team_seasons (team, season, league, team_name, games_played, wins, losses, "
                 "win_pct, off_rating, def_rating, net_rating, pace) FROM STDIN"
             ) as copy:
                 for row in teams_df.itertuples(index=False):
+                    league = getattr(row, "LEAGUE", "NBA")
                     copy.write_row((
-                        row.TEAM_ABBREVIATION, row.SEASON, row.TEAM_NAME, int(row.GP),
+                        row.TEAM_ABBREVIATION, row.SEASON, league, row.TEAM_NAME, int(row.GP),
                         int(row.W), int(row.L), row.W_PCT,
                         row.OFF_RATING, row.DEF_RATING, row.NET_RATING, row.PACE,
                     ))
@@ -40,7 +46,7 @@ def load_to_postgres(cards: list, database_url: str) -> None:
 
             with cur.copy(
                 "COPY player_seasons ("
-                "player_id, season, player_name, team, age, positions, primary_position, tier, "
+                "player_id, season, league, player_name, team, age, positions, primary_position, tier, "
                 "games_played, scheduled_games, availability_pct, roster_status, "
                 "rating_overall, rating_scoring, rating_playmaking, rating_defense, rating_impact, "
                 "pg_pts, pg_reb, pg_ast, pg_stl, pg_blk, pg_tov, pg_min, pg_oreb, pg_dreb, "
@@ -55,7 +61,7 @@ def load_to_postgres(cards: list, database_url: str) -> None:
                         c["availability"], c["ratings"], c["per_game"], c["scoring"], c["advanced"],
                     )
                     copy.write_row((
-                        c["player_id"], c["season"], c["player_name"], c["team"], to_int(c["age"]),
+                        c["player_id"], c["season"], c.get("league", "NBA"), c["player_name"], c["team"], to_int(c["age"]),
                         c["positions"], c["primary_position"], c["tier"],
                         avail["games_played"], to_int(avail["scheduled_games"]),
                         avail["availability_pct"], avail["roster_status"],
@@ -97,3 +103,43 @@ def load_to_postgres(cards: list, database_url: str) -> None:
                         ))
         conn.commit()
     print(f"  ✓ Loaded {len(cards):,} player-seasons into Postgres")
+
+
+def load_playoff_seasons_to_postgres(cards: list, database_url: str) -> None:
+    print("\nLoading playoff cards into Postgres…")
+    with psycopg.connect(database_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute("TRUNCATE TABLE player_playoff_seasons")
+            with cur.copy(
+                "COPY player_playoff_seasons ("
+                "player_id, season, league, player_name, team, age, positions, primary_position, "
+                "games_played, "
+                "rating_overall, rating_scoring, rating_playmaking, rating_defense, rating_impact, "
+                "playoff_badge, "
+                "pg_pts, pg_reb, pg_ast, pg_stl, pg_blk, pg_tov, pg_min, pg_oreb, pg_dreb, "
+                "fg_pct, fg3_pct, ft_pct, efg_pct, ts_pct, fg3a_per_game, fga_per_game, pct_uast_fgm, "
+                "off_rating, def_rating, net_rating, ast_pct, ast_to, usg_pct, oreb_pct, dreb_pct, "
+                "pie, pace, plus_minus, e_tov_pct, clutch_plus_minus"
+                ") FROM STDIN"
+            ) as copy:
+                to_int = lambda v: None if v is None else int(v)
+                for c in cards:
+                    rt, pg, sc, adv = c["ratings"], c["per_game"], c["scoring"], c["advanced"]
+                    copy.write_row((
+                        c["player_id"], c["season"], c.get("league", "NBA"), c["player_name"], c["team"],
+                        to_int(c["age"]), c["positions"], c["primary_position"],
+                        c["games_played"],
+                        rt["overall"], rt["scoring"], rt["playmaking"], rt["defense"], rt["impact"],
+                        c["playoff_badge"],
+                        pg["pts"], pg["reb"], pg["ast"], pg["stl"], pg["blk"],
+                        pg["tov"], pg["min"], pg["oreb"], pg["dreb"],
+                        sc["fg_pct"], sc["fg3_pct"], sc["ft_pct"], sc["efg_pct"], sc["ts_pct"],
+                        sc["fg3a_per_game"], sc["fga_per_game"], sc["pct_uast_fgm"],
+                        adv["off_rating"], adv["def_rating"], adv["net_rating"],
+                        adv["ast_pct"], adv["ast_to"], adv["usg_pct"],
+                        adv["oreb_pct"], adv["dreb_pct"], adv["pie"], adv["pace"],
+                        adv["plus_minus"], adv["e_tov_pct"],
+                        c["clutch"]["clutch_plus_minus"],
+                    ))
+        conn.commit()
+    print(f"  ✓ Loaded {len(cards):,} playoff player-seasons into Postgres")

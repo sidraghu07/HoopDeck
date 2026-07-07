@@ -12,25 +12,33 @@ type DragPayload =
   | { kind: "slot"; index: number }
   | { kind: "search"; player_id: number; player_name: string };
 
-const STARTER_LABELS = ["PG", "SG", "SF", "PF", "C"];
+const LEAGUES = ["NBA", "WNBA"] as const;
+const STARTER_LABELS_BY_LEAGUE: Record<string, string[]> = {
+  NBA: ["PG", "SG", "SF", "PF", "C"],
+  // WNBA basketball-reference only distinguishes G/F/C, so the closest
+  // real-world-plausible 5-slot starting lineup this data supports is 2/2/1.
+  WNBA: ["G", "G", "F", "F", "C"],
+};
 const BENCH_COUNT = 10;
-const TOTAL_SLOTS = STARTER_LABELS.length + BENCH_COUNT;
 
-function slotLabel(index: number): string {
-  return index < STARTER_LABELS.length ? STARTER_LABELS[index] : `BENCH ${index - STARTER_LABELS.length + 1}`;
+function slotLabel(index: number, starterLabels: string[]): string {
+  return index < starterLabels.length ? starterLabels[index] : `BENCH ${index - starterLabels.length + 1}`;
 }
 
-function slotPosition(index: number): string | undefined {
-  return index < STARTER_LABELS.length ? STARTER_LABELS[index] : undefined;
+function slotPosition(index: number, starterLabels: string[]): string | undefined {
+  return index < starterLabels.length ? starterLabels[index] : undefined;
 }
 
 export default function LineupBuilder() {
+  const [league, setLeague] = useState<string>("NBA");
+  const starterLabels = STARTER_LABELS_BY_LEAGUE[league];
+  const totalSlots = starterLabels.length + BENCH_COUNT;
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<CareerCard[]>([]);
   const [searching, setSearching] = useState(false);
   const [activePlayer, setActivePlayer] = useState<{ id: number; name: string; seasons: PlayerSeason[] } | null>(null);
   const [loadingSeasons, setLoadingSeasons] = useState(false);
-  const [slots, setSlots] = useState<(PlayerSeason | null)[]>(Array(TOTAL_SLOTS).fill(null));
+  const [slots, setSlots] = useState<(PlayerSeason | null)[]>(Array(totalSlots).fill(null));
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [result, setResult] = useState<LineupResult | null>(null);
@@ -45,7 +53,7 @@ export default function LineupBuilder() {
     let cancelled = false;
     setSearching(true);
     const timeout = setTimeout(() => {
-      getPlayers({ season: "ALL", name: query, page: 1 })
+      getPlayers({ season: "ALL", league, name: query, page: 1 })
         .then((data) => { if (!cancelled) setSearchResults(data?.players ?? []); })
         .catch(() => { if (!cancelled) setSearchResults([]); })
         .finally(() => { if (!cancelled) setSearching(false); });
@@ -54,7 +62,20 @@ export default function LineupBuilder() {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [query]);
+  }, [query, league]);
+
+  function switchLeague(next: string) {
+    if (next === league) return;
+    setLeague(next);
+    setSlots(Array(STARTER_LABELS_BY_LEAGUE[next].length + BENCH_COUNT).fill(null));
+    setActivePlayer(null);
+    setQuery("");
+    setSearchResults([]);
+    setSelectedSlot(null);
+    setResult(null);
+    setShowResultModal(false);
+    setSimError(null);
+  }
 
   function pickPlayer(playerId: number, name: string) {
     setLoadingSeasons(true);
@@ -86,9 +107,9 @@ export default function LineupBuilder() {
   }
 
   function bestSlotFor(position: string): number {
-    const starterIdx = STARTER_LABELS.indexOf(position);
-    if (starterIdx !== -1 && slots[starterIdx] === null) return starterIdx;
-    const benchIdx = slots.findIndex((s, i) => s === null && i >= STARTER_LABELS.length);
+    const starterIdx = slots.findIndex((s, i) => s === null && starterLabels[i] === position);
+    if (starterIdx !== -1) return starterIdx;
+    const benchIdx = slots.findIndex((s, i) => s === null && i >= starterLabels.length);
     if (benchIdx !== -1) return benchIdx;
     return slots.findIndex((s) => s === null);
   }
@@ -205,7 +226,7 @@ export default function LineupBuilder() {
     const payload = slots
       .map((entry, i) =>
         entry
-          ? { player_id: entry.player_id, season: entry.season, position: slotPosition(i) }
+          ? { player_id: entry.player_id, season: entry.season, position: slotPosition(i, starterLabels) }
           : null
       )
       .filter((p): p is { player_id: number; season: string; position: string | undefined } => p !== null);
@@ -213,7 +234,7 @@ export default function LineupBuilder() {
     setSimLoading(true);
     setSimError(null);
     setResult(null);
-    simulateLineup(payload)
+    simulateLineup(league, payload)
       .then((r) => {
         setResult(r);
         setShowResultModal(true);
@@ -229,6 +250,18 @@ export default function LineupBuilder() {
   return (
     <div className={styles.wrap}>
       <div className={styles.searchPanel}>
+        <div className={styles.leagueToggle}>
+          {LEAGUES.map((l) => (
+            <button
+              key={l}
+              type="button"
+              className={`${styles.leagueBtn} ${league === l ? styles.leagueBtnActive : ""}`}
+              onClick={() => switchLeague(l)}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
         <div className={styles.searchBox}>
           <span className={styles.prompt}>&gt;</span>
           <input
@@ -257,6 +290,7 @@ export default function LineupBuilder() {
                     data={c.career}
                     player_name={c.player_name}
                     player_id={c.player_id}
+                    league={c.league}
                     scale={0.55}
                     draggable
                     onDragStart={(e) => onSearchCardDragStart(e, c)}
@@ -316,11 +350,11 @@ export default function LineupBuilder() {
         )}
 
         <div className={styles.starterRow}>
-          {slots.slice(0, STARTER_LABELS.length).map((entry, i) => (
+          {slots.slice(0, starterLabels.length).map((entry, i) => (
             <Slot
               key={i}
               index={i}
-              label={slotLabel(i)}
+              label={slotLabel(i, starterLabels)}
               entry={entry}
               isDragOver={dragOverSlot === i}
               isSelected={selectedSlot === i}
@@ -337,13 +371,13 @@ export default function LineupBuilder() {
 
         <div className={styles.benchLabel}>BENCH</div>
         <div className={styles.benchGrid}>
-          {slots.slice(STARTER_LABELS.length).map((entry, i) => {
-            const index = STARTER_LABELS.length + i;
+          {slots.slice(starterLabels.length).map((entry, i) => {
+            const index = starterLabels.length + i;
             return (
               <Slot
                 key={index}
                 index={index}
-                label={slotLabel(index)}
+                label={slotLabel(index, starterLabels)}
                 entry={entry}
                 isDragOver={dragOverSlot === index}
                 isSelected={selectedSlot === index}

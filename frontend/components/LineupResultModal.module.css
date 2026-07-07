@@ -166,6 +166,15 @@
   color: var(--accent);
 }
 
+.rosterPosWarn {
+  color: #dc2626;
+}
+
+.rosterOvrPenalty {
+  color: #dc2626;
+  font-size: 12px;
+}
+
 .rosterMin {
   color: var(--text-muted);
 }

@@ -1,3 +1,4 @@
+import os
 import time
 import unicodedata
 import numpy as np
@@ -7,19 +8,61 @@ from io import StringIO
 from difflib import get_close_matches
 from bs4 import BeautifulSoup
 from nba_api.stats.endpoints import leaguedashplayerstats, leaguedashplayerclutch
+from nba_api.stats.library.parameters import LeagueID
+
+LEAGUE = os.environ.get("LEAGUE", "NBA")
+if LEAGUE not in ("NBA", "WNBA"):
+    raise ValueError(f"Unsupported LEAGUE={LEAGUE!r}, expected 'NBA' or 'WNBA'")
+
+# "Regular Season" (default) or "Playoffs". Playoffs data is a much smaller,
+# separate surface (see data/db/schema.sql's player_playoff_seasons) — it
+# gets its own output CSV and skips the tier system entirely (see the
+# add_player_tiers call near the bottom of this file).
+SEASON_TYPE = os.environ.get("SEASON_TYPE", "Regular Season")
+if SEASON_TYPE not in ("Regular Season", "Playoffs"):
+    raise ValueError(f"Unsupported SEASON_TYPE={SEASON_TYPE!r}, expected 'Regular Season' or 'Playoffs'")
+IS_PLAYOFFS = SEASON_TYPE == "Playoffs"
+
+_prefix = "nba" if LEAGUE == "NBA" else "wnba"
+OUT_CSV = f"data/csv/{_prefix}_player_playoff_stats.csv" if IS_PLAYOFFS else f"data/csv/{_prefix}_player_base_stats.csv"
+
+# When set (comma-separated season strings, e.g. "2025-26" or "2025,2024"),
+# only those seasons are re-fetched and the result is merged into the
+# existing OUT_CSV (replacing just those seasons' rows) instead of doing a
+# full-history pull. Used by data/update_current_season.py for daily
+# in-season refreshes — full-history behavior (this unset) is unchanged.
+SEASONS_OVERRIDE = os.environ.get("SEASONS_OVERRIDE")
+
 
 def _season_str(start_year: int) -> str:
     return f"{start_year}-{(start_year + 1) % 100:02d}"
 
-seasons = [_season_str(y) for y in range(1996, 2026)]
 
-SEASON_GAMES = {s: 82 for s in seasons}
-SEASON_GAMES["1998-99"] = 50
-SEASON_GAMES["2011-12"] = 66
-SEASON_GAMES["2020-21"] = 72
-del SEASON_GAMES["2019-20"]
+if LEAGUE == "NBA":
+    seasons = [_season_str(y) for y in range(1996, 2026)]
 
-SEASON_TO_BREF_YEAR = {s: int(s[:4]) + 1 for s in seasons}
+    SEASON_GAMES = {s: 82 for s in seasons}
+    SEASON_GAMES["1998-99"] = 50
+    SEASON_GAMES["2011-12"] = 66
+    SEASON_GAMES["2020-21"] = 72
+    del SEASON_GAMES["2019-20"]
+
+    SEASON_TO_BREF_YEAR = {s: int(s[:4]) + 1 for s in seasons}
+else:
+    # WNBA season strings are bare years (bref year == season year, no +1 offset).
+    # Full historical per-season schedule lengths aren't hand-verified here — only
+    # the well-known 2020 "bubble" season is pinned; every other season falls back
+    # to max(GP) observed that season (see SCHEDULED_GAMES below), same fallback
+    # path the NBA pipeline already uses for any season missing from SEASON_GAMES.
+    seasons = [str(y) for y in range(1997, 2026)]
+
+    SEASON_GAMES = {"2020": 22}
+    SEASON_TO_BREF_YEAR = {s: int(s) for s in seasons}
+
+if SEASONS_OVERRIDE:
+    _override_seasons = [s.strip() for s in SEASONS_OVERRIDE.split(",") if s.strip()]
+    seasons = [s for s in seasons if s in _override_seasons] or _override_seasons
+    SEASON_TO_BREF_YEAR = {s: SEASON_TO_BREF_YEAR[s] for s in seasons if s in SEASON_TO_BREF_YEAR}
 
 HEADERS = {
     "User-Agent": (
@@ -53,7 +96,13 @@ NAME_OVERRIDES = {
 MANUAL_POSITION_OVERRIDES: dict[tuple, str] = {
 }
 
-VALID_POSITIONS = {"PG", "SG", "SF", "PF", "C"}
+VALID_POSITIONS = {"PG", "SG", "SF", "PF", "C"} if LEAGUE == "NBA" else {"G", "F", "C"}
+
+# Position groups used by the tiering impact bonuses below. NBA uses its 5-way
+# taxonomy; WNBA basketball-reference only distinguishes G/F/C, so "scoring_alpha"
+# (non-big shot creators) maps to the single "G" bucket instead of PG/SG/SF.
+SCORING_ALPHA_POSITIONS = ["PG", "SG", "SF"] if LEAGUE == "NBA" else ["G"]
+RIM_ANCHOR_POSITIONS = ["C"]
 
 FIRST_OPTION_PCTILE = 0.95
 ALL_STAR_PCTILE     = 0.90
@@ -111,6 +160,56 @@ def scrape_bref_positions(year: int, season_str: str) -> pd.DataFrame:
 
     df["POSITION"] = df["POSITION"].str.split("-").str[0].str.strip()
 
+    df = df.drop_duplicates(subset=["PLAYER_NAME", "SEASON"], keep="first")
+    df = df[df["POSITION"].isin(VALID_POSITIONS)].copy()
+    df["NAME_NORM"] = df["PLAYER_NAME"].apply(normalize_name)
+    return df
+
+
+def scrape_bref_positions_wnba(year: int, season_str: str) -> pd.DataFrame:
+    """WNBA equivalent of scrape_bref_positions().
+
+    basketball-reference's WNBA per-game table has a duplicate data-stat="g"
+    header (both "Games" and a second "Games" column share the attribute),
+    which breaks pandas.read_html's column alignment. Parsing the tbody rows
+    directly via their data-stat attributes sidesteps that entirely.
+
+    The player-name cell's markup is also malformed (an unclosed <th><strong>
+    wrapping the name), which makes every subsequent <td> in the row parse as
+    a *descendant* of that cell rather than a sibling — so a naive
+    td.get_text() on the name cell picks up the entire row's stats
+    concatenated together. Reading the name from its nested <a> tag specifically
+    sidesteps that.
+    """
+    url = f"https://www.basketball-reference.com/wnba/years/{year}_per_game.html"
+
+    resp = requests.get(url, headers=HEADERS, timeout=20)
+    resp.raise_for_status()
+    resp.encoding = "utf-8"
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    table = (
+        soup.find("table", {"id": "per_game_stats"})
+        or soup.find("table", {"id": "per_game"})
+    )
+    if table is None:
+        raise ValueError(f"Could not find per_game_stats table for {year}")
+
+    tbody = table.find("tbody")
+    rows = []
+    for tr in tbody.find_all("tr"):
+        name_cell = tr.find(attrs={"data-stat": "player"})
+        name_link = name_cell.find("a") if name_cell else None
+        name = name_link.get_text(strip=True) if name_link else None
+        pos_cell = tr.find(attrs={"data-stat": "pos"})
+        pos = pos_cell.get_text(strip=True) if pos_cell else None
+        if not name or not pos:
+            continue
+        rows.append({"PLAYER_NAME": name, "POSITION": pos})
+
+    df = pd.DataFrame(rows)
+    df["SEASON"] = season_str
+    df["POSITION"] = df["POSITION"].str.split("-").str[0].str.strip()
     df = df.drop_duplicates(subset=["PLAYER_NAME", "SEASON"], keep="first")
     df = df[df["POSITION"].isin(VALID_POSITIONS)].copy()
     df["NAME_NORM"] = df["PLAYER_NAME"].apply(normalize_name)
@@ -184,8 +283,8 @@ def add_player_tiers(df: pd.DataFrame) -> pd.DataFrame:
         ast = e["AST_PCT"]
 
         heliocentric   = (usg >= 0.26) & (ast >= 0.25)
-        scoring_alpha  = (usg >= 0.28) & (ast >= 0.18) & pos.isin(["PG", "SG", "SF"])
-        rim_anchor     = (pos == "C") & (usg < 0.18) & (ast < 0.12)
+        scoring_alpha  = (usg >= 0.28) & (ast >= 0.18) & pos.isin(SCORING_ALPHA_POSITIONS)
+        rim_anchor     = pos.isin(RIM_ANCHOR_POSITIONS) & (usg < 0.18) & (ast < 0.12)
 
         impact[heliocentric]                    += 0.50
         impact[scoring_alpha & ~heliocentric]   += 0.50
@@ -354,6 +453,8 @@ all_def_data    = []
 all_scoring_data = []
 all_clutch_data = []
 
+LEAGUE_ID_KWARGS = {} if LEAGUE == "NBA" else {"league_id_nullable": LeagueID.wnba}
+
 for season in seasons:
     print(f"\n── {season} ──")
 
@@ -368,7 +469,9 @@ for season in seasons:
             result = leaguedashplayerstats.LeagueDashPlayerStats(
                 season=season,
                 per_mode_detailed="PerGame",
+                season_type_all_star=SEASON_TYPE,
                 **kwargs,
+                **LEAGUE_ID_KWARGS,
             ).get_data_frames()[0]
             result["SEASON"] = season
 
@@ -390,6 +493,8 @@ for season in seasons:
         clutch = leaguedashplayerclutch.LeagueDashPlayerClutch(
             season=season,
             per_mode_detailed="PerGame",
+            season_type_all_star=SEASON_TYPE,
+            **LEAGUE_ID_KWARGS,
         ).get_data_frames()[0]
         clutch["SEASON"] = season
         all_clutch_data.append(clutch)
@@ -447,10 +552,11 @@ final_df["AVAILABILITY_PCT"] = (final_df["GP"] / final_df["SCHEDULED_GAMES"]).ro
 
 print("\nScraping positions from Basketball Reference...")
 bref_frames = []
+_scrape_positions = scrape_bref_positions if LEAGUE == "NBA" else scrape_bref_positions_wnba
 
 for season_str, year in SEASON_TO_BREF_YEAR.items():
     try:
-        bref_df_season = scrape_bref_positions(year, season_str)
+        bref_df_season = _scrape_positions(year, season_str)
         print(
             f"  {season_str}: {len(bref_df_season)} players — "
             f"{bref_df_season['POSITION'].value_counts().to_dict()}"
@@ -533,24 +639,38 @@ else:
 
 print(f"\nFinal POSITION breakdown:\n{final_df['POSITION'].value_counts().to_string()}")
 
+if SEASONS_OVERRIDE and os.path.exists(OUT_CSV):
+    print(f"\nMerging {seasons} into existing {OUT_CSV}...")
+    existing_df = pd.read_csv(OUT_CSV, dtype={"SEASON": str})
+    existing_df = existing_df[~existing_df["SEASON"].isin(seasons)]
+    final_df = pd.concat([existing_df, final_df], ignore_index=True, sort=False)
+    print(f"  Merged shape: {final_df.shape}")
 
-print("\nAssigning tiers (First Option / All-Star / Starter / Rotation / Bench)...")
-final_df = add_player_tiers(final_df)
+if IS_PLAYOFFS:
+    # Playoff samples (single digits to ~28 games) are too small and
+    # survivorship-biased for the tier system's cross-season persistence
+    # logic — build_card_data.py's playoff path rates players directly off
+    # percentiles instead, with no tier at all.
+    print("\nSkipping tier assignment for playoffs data.")
+else:
+    print("\nAssigning tiers (First Option / All-Star / Starter / Rotation / Bench)...")
+    final_df = add_player_tiers(final_df)
 
-print(f"\nFinal TIER breakdown:\n{final_df['TIER'].value_counts().to_string()}")
+    print(f"\nFinal TIER breakdown:\n{final_df['TIER'].value_counts().to_string()}")
 
-for check_name in ["Nikola Jokic", "Jamal Murray", "Tim Hardaway Jr."]:
-    hits = final_df[final_df["PLAYER_NAME"] == check_name][
-        ["PLAYER_NAME", "SEASON", "IMPACT_PCTILE", "TIER"]
-    ]
-    if not hits.empty:
-        print(f"\n  Check: {check_name}")
-        print(hits.to_string(index=False))
+    for check_name in ["Nikola Jokic", "Jamal Murray", "Tim Hardaway Jr."]:
+        hits = final_df[final_df["PLAYER_NAME"] == check_name][
+            ["PLAYER_NAME", "SEASON", "IMPACT_PCTILE", "TIER"]
+        ]
+        if not hits.empty:
+            print(f"\n  Check: {check_name}")
+            print(hits.to_string(index=False))
 
 
-final_df.to_csv("data/csv/nba_player_base_stats.csv", index=False)
+final_df["LEAGUE"] = LEAGUE
+final_df.to_csv(OUT_CSV, index=False)
 print(
     f"\n✓ Saved {len(final_df)} rows × {len(final_df.columns)} columns "
-    f"→ data/csv/nba_player_base_stats.csv"
+    f"→ {OUT_CSV}"
 )
 print(f"  Seasons: {sorted(final_df['SEASON'].unique())}")

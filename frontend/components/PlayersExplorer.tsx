@@ -9,6 +9,7 @@ import PlayerCard from "./PlayerCard";
 import styles from "./PlayersExplorer.module.css";
 
 const ALL_TIERS: Tier[] = ["Franchise Player", "All-Star", "Starter", "Rotation", "Bench"];
+const LEAGUES = ["NBA", "WNBA"];
 
 const SORT_FIELDS = ["overall", "pts", "reb", "ast", "stl", "blk", "min"];
 const SORT_LABELS: Record<string, string> = {
@@ -22,6 +23,7 @@ interface Props {
   careerCards: CareerCard[];
   cardCount: number;
   isAllSeasons: boolean;
+  league: string;
   season: string;
   name: string;
   tier: string;
@@ -39,6 +41,7 @@ export default function PlayersExplorer({
   careerCards,
   cardCount,
   isAllSeasons,
+  league,
   season,
   name,
   tier,
@@ -62,6 +65,7 @@ export default function PlayersExplorer({
 
   function pageUrl(target: number) {
     const params = new URLSearchParams();
+    params.set("league", league);
     params.set("season", season);
     if (name) params.set("name", name);
     if (tier) params.set("tier", tier);
@@ -78,6 +82,24 @@ export default function PlayersExplorer({
         <form method="GET" action="/players" className={styles.controls}>
           <SearchBar defaultValue={name} />
           <div className={styles.filterRow}>
+            <label className={styles.selectWrap}>
+              <span className={styles.selectLabel}>LEAGUE</span>
+              <select
+                className={styles.select}
+                name="league"
+                defaultValue={league}
+                onChange={(e) => {
+                  // Season/position lists are league-scoped — drop every
+                  // other filter and let the server pick a fresh default
+                  // season for the newly selected league.
+                  window.location.href = `/players?league=${e.target.value}`;
+                }}
+              >
+                {LEAGUES.map((l) => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+            </label>
             <FilterSelect label="SEASON"   name="season"   value={season}   options={seasons} emptyLabel={undefined} allLabel="ALL SEASONS" />
             <FilterSelect
               label="TIER"
@@ -120,6 +142,7 @@ export default function PlayersExplorer({
                     data={g.career}
                     player_name={g.player_name}
                     player_id={g.player_id}
+                    league={g.league}
                     onClick={() => { window.location.href = `/players/${g.player_id}`; }}
                     scale={isMobile ? 0.65 : undefined}
                   />

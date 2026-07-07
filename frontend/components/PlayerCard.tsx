@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { CareerSummary, PlayerSeasonCard } from "@/lib/types";
+import { CareerSummary, League, PlayerSeasonCard } from "@/lib/types";
 import { TIER_STYLE } from "@/lib/tiers";
 import styles from "./PlayerCard.module.css";
 
@@ -16,6 +16,7 @@ type CareerCardProps = {
   data: CareerSummary;
   player_name: string;
   player_id: number;
+  league?: League;
 };
 
 export type PlayerCardProps = SeasonCardProps | CareerCardProps;
@@ -33,6 +34,7 @@ export default function PlayerCard(
 
   const name = props.mode === "season" ? props.data.player_name : props.player_name;
   const playerId = props.mode === "season" ? props.data.player_id : props.player_id;
+  const league: League = props.mode === "season" ? props.data.league : (props.league ?? "NBA");
   const hasPhoto = props.data.has_photo;
   const overall = props.mode === "season" ? props.data.ratings.overall : props.data.bestOverall;
   const position = props.mode === "season" ? props.data.primary_position : props.data.primary_position;
@@ -66,7 +68,7 @@ export default function PlayerCard(
           <span className={styles.editionTag}>{tag}</span>
         </div>
 
-        <PlayerPortrait name={name} playerId={playerId} overall={overall} hasPhoto={hasPhoto} />
+        <PlayerPortrait name={name} playerId={playerId} overall={overall} hasPhoto={hasPhoto} league={league} />
 
         <div className={styles.namePlate}>
           <div className={styles.name} title={name}>
@@ -114,11 +116,13 @@ function PlayerPortrait({
   playerId,
   overall,
   hasPhoto,
+  league,
 }: {
   name: string;
   playerId: number;
   overall: number;
   hasPhoto: boolean;
+  league: League;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
   const initials = name
@@ -127,7 +131,10 @@ function PlayerPortrait({
     .slice(0, 2)
     .join("");
 
-  const imgUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${playerId}.png`;
+  const imgUrl =
+    league === "WNBA"
+      ? `https://cdn.wnba.com/headshots/wnba/latest/1040x760/${playerId}.png`
+      : `https://cdn.nba.com/headshots/nba/latest/1040x760/${playerId}.png`;
 
   return (
     <div className={styles.portrait}>

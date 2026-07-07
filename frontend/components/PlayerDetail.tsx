@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { PlayerSeason, ShotZone } from "@/lib/types";
+import { useSearchParams } from "next/navigation";
+import { PlayerSeason, PlayoffPlayerSeason, ShotZone } from "@/lib/types";
 import { TIER_STYLE } from "@/lib/tiers";
 import styles from "./PlayerDetail.module.css";
 
@@ -13,14 +14,52 @@ type PanelName = (typeof PANELS)[number];
 interface Props {
   seasons: PlayerSeason[];
   active: PlayerSeason;
+  playoffsBySeason: Record<string, PlayoffPlayerSeason>;
 }
 
-export default function PlayerDetail({ seasons, active }: Props) {
+// Playoffs data is a reduced surface (no shot zones/availability/tier) — this
+// adapts it into the same PlayerSeason shape so the header/ribbon/panels
+// below can render it with zero special-casing. The SHOT ZONES panel already
+// degrades gracefully on an empty zones map; the AVAILABILITY panel already
+// falls back to "—" on nulls.
+function toDisplaySeason(regular: PlayerSeason, playoff: PlayoffPlayerSeason): PlayerSeason {
+  return {
+    ...regular,
+    team: playoff.team,
+    age: playoff.age,
+    positions: playoff.positions,
+    primary_position: playoff.primary_position,
+    ratings: playoff.ratings,
+    per_game: playoff.per_game,
+    scoring: playoff.scoring,
+    advanced: playoff.advanced,
+    clutch: playoff.clutch,
+    ratings_by_position: {},
+    shot_zones: {},
+    hottest_zone: "",
+    availability: {
+      games_played: playoff.games_played,
+      scheduled_games: regular.availability.scheduled_games,
+      availability_pct: regular.availability.availability_pct,
+      roster_status: "Playoffs",
+    },
+  };
+}
+
+export default function PlayerDetail({ seasons, active, playoffsBySeason }: Props) {
   const [panelIdx, setPanelIdx] = useState(0);
   const [imgFailed, setImgFailed] = useState(false);
+  const searchParams = useSearchParams();
+
+  const playoffData = playoffsBySeason[active.season];
+  const showPlayoffs = searchParams.get("view") === "playoffs" && !!playoffData;
+  const displayed = showPlayoffs ? toDisplaySeason(active, playoffData) : active;
 
   const style = TIER_STYLE[active.tier] ?? TIER_STYLE["Bench"];
-  const imgUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${active.player_id}.png`;
+  const imgUrl =
+    active.league === "WNBA"
+      ? `https://cdn.wnba.com/headshots/wnba/latest/1040x760/${active.player_id}.png`
+      : `https://cdn.nba.com/headshots/nba/latest/1040x760/${active.player_id}.png`;
 
   function prev() { setPanelIdx((i) => (i - 1 + PANELS.length) % PANELS.length); }
   function next() { setPanelIdx((i) => (i + 1) % PANELS.length); }
@@ -39,7 +78,7 @@ export default function PlayerDetail({ seasons, active }: Props) {
             <a
               key={s.season}
               href={`/players/${active.player_id}?season=${s.season}`}
-              className={`${styles.seasonTab} ${s.season === active.season ? styles.activeTab : ""}`}
+              className={`${styles.seasonTab} ${s.season === active.season && !showPlayoffs ? styles.activeTab : ""}`}
             >
               {s.season}
             </a>
@@ -47,10 +86,29 @@ export default function PlayerDetail({ seasons, active }: Props) {
         </div>
       </div>
 
+      {playoffData && (
+        <div className={styles.seasonTabs}>
+          <a
+            href={`/players/${active.player_id}?season=${active.season}`}
+            className={`${styles.seasonTab} ${!showPlayoffs ? styles.activeTab : ""}`}
+          >
+            REGULAR SEASON
+          </a>
+          <a
+            href={`/players/${active.player_id}?season=${active.season}&view=playoffs`}
+            className={`${styles.seasonTab} ${showPlayoffs ? styles.activeTab : ""}`}
+          >
+            PLAYOFFS
+          </a>
+        </div>
+      )}
+
       <div className={styles.card}>
 
         <div className={styles.cardHeader}>
-          <span className={styles.tierBadge}>{style.label}</span>
+          <span className={styles.tierBadge}>
+            {showPlayoffs ? (playoffData?.playoff_badge ?? "PLAYOFFS") : style.label}
+          </span>
           <span className={styles.cardSeason}>{active.season}</span>
         </div>
 
@@ -71,14 +129,14 @@ export default function PlayerDetail({ seasons, active }: Props) {
             </span>
           )}
           <div className={styles.ovrBadge}>
-            <span className={styles.ovrNum}>{active.ratings.overall}</span>
+            <span className={styles.ovrNum}>{displayed.ratings.overall}</span>
             <span className={styles.ovrLbl}>OVR</span>
           </div>
         </div>
 
         <div className={styles.namePlate}>
           <div className={styles.playerName}>{active.player_name}</div>
-          <div className={styles.playerSub}>{active.primary_position} · {active.team}</div>
+          <div className={styles.playerSub}>{displayed.primary_position} · {displayed.team}</div>
         </div>
 
         <div className={styles.slideshow}>
@@ -86,7 +144,7 @@ export default function PlayerDetail({ seasons, active }: Props) {
 
           <div className={styles.panel}>
             <div className={styles.panelTitle}>{PANELS[panelIdx]}</div>
-            <PanelContent name={PANELS[panelIdx]} player={active} />
+            <PanelContent name={PANELS[panelIdx]} player={displayed} />
           </div>
 
           <button className={styles.arrow} onClick={next} aria-label="Next panel">►</button>
@@ -104,10 +162,10 @@ export default function PlayerDetail({ seasons, active }: Props) {
         </div>
 
         <div className={styles.ribbon}>
-          <RibbonBit label="SCR" value={active.ratings.scoring} />
-          <RibbonBit label="PLY" value={active.ratings.playmaking} />
-          <RibbonBit label="DEF" value={active.ratings.defense} />
-          <RibbonBit label="IMP" value={active.ratings.impact} />
+          <RibbonBit label="SCR" value={displayed.ratings.scoring} />
+          <RibbonBit label="PLY" value={displayed.ratings.playmaking} />
+          <RibbonBit label="DEF" value={displayed.ratings.defense} />
+          <RibbonBit label="IMP" value={displayed.ratings.impact} />
         </div>
       </div>
     </div>

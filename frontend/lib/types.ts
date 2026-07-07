@@ -1,4 +1,5 @@
 export type Tier = "Franchise Player" | "All-Star" | "Starter" | "Rotation" | "Bench";
+export type League = "NBA" | "WNBA";
 
 export interface ShotZone {
   attempts: number;
@@ -18,6 +19,7 @@ export interface PlayerSeason {
   player_id: number;
   player_name: string;
   season: string;
+  league: League;
   team: string;
   age: number;
   positions: string[];
@@ -66,6 +68,53 @@ export interface PlayerSeason {
   total_charted_fga: number;
 }
 
+// Playoff performance is tracked as a separate, reduced surface — no tier
+// (small, survivorship-biased samples don't support the persistence-based
+// tier system), no shot zones/ratings-by-position, no photo flag (reuses the
+// regular-season one).
+export interface PlayoffPlayerSeason {
+  player_id: number;
+  player_name: string;
+  season: string;
+  league: League;
+  team: string;
+  age: number;
+  positions: string[];
+  primary_position: string;
+  playoff_badge: string | null;
+  games_played: number;
+  ratings: {
+    overall: number;
+    scoring: number;
+    playmaking: number;
+    defense: number;
+    impact: number;
+  };
+  per_game: {
+    pts: number;
+    reb: number;
+    ast: number;
+    stl: number;
+    blk: number;
+    tov: number;
+    min: number;
+    oreb: number;
+    dreb: number;
+  };
+  scoring: {
+    fg_pct: number;
+    fg3_pct: number;
+    ft_pct: number;
+    efg_pct: number;
+    ts_pct: number;
+    fg3a_per_game: number;
+    fga_per_game: number;
+    pct_uast_fgm: number;
+  };
+  advanced: Record<string, number>;
+  clutch: { clutch_plus_minus: number };
+}
+
 export interface PlayersResponse {
   meta: Record<string, unknown>;
   players: PlayerSeason[];
@@ -75,6 +124,7 @@ export interface PlayerSeasonCard {
   player_id: number;
   player_name: string;
   season: string;
+  league: League;
   team: string;
   primary_position: string;
   tier: Tier;
@@ -99,6 +149,7 @@ export interface PlayerSeasonCard {
 export interface CareerCard {
   player_id: number;
   player_name: string;
+  league: League;
   career: CareerSummary;
 }
 
@@ -141,6 +192,7 @@ export interface LineupRosterEntry {
   assigned_position: string | null;
   tier: Tier;
   rating_overall: number;
+  out_of_position_penalty: number;
   assumed_minutes: number;
 }
 
@@ -155,6 +207,7 @@ export interface LineupRosterFeatures {
 }
 
 export interface LineupResult {
+  league: League;
   predicted_net_rating: number;
   predicted_win_pct: number;
   predicted_record: string;
@@ -166,6 +219,7 @@ export interface PlayerStatRow {
   player_id: number;
   player_name: string;
   season: string;
+  league: League;
   team: string;
   primary_position: string;
   tier: Tier;
@@ -175,6 +229,7 @@ export interface PlayerStatRow {
 export interface TeamStatRow {
   team: string;
   season: string;
+  league: League;
   team_name: string;
   [stat: string]: string | number;
 }
@@ -182,4 +237,5 @@ export interface TeamStatRow {
 export interface TeamListItem {
   team: string;
   team_name: string;
+  league: League;
 }

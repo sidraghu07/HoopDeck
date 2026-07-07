@@ -6,22 +6,54 @@ import warnings
 warnings.filterwarnings("ignore")
 
 from rating_lib import (
-    MIN_GP, MIN_MPG, build_pool, compute_subscores, parse_positions, percentile_rating, safe,
+    MIN_GP_BY_LEAGUE, MIN_MPG, PLAYOFF_MIN_GP, build_pool, compute_subscores, parse_positions,
+    percentile_rating, safe,
 )
-from db.loader import load_to_postgres
+from db.loader import load_playoff_seasons_to_postgres, load_to_postgres
 
-STATS_CSV       = "data/csv/nba_player_base_stats.csv"
-SHOTS_ZONES_CSV = "data/csv/nba_shot_zone_summary.csv"
+STATS_CSVS = {
+    "NBA":  "data/csv/nba_player_base_stats.csv",
+    "WNBA": "data/csv/wnba_player_base_stats.csv",
+}
+PLAYOFF_STATS_CSVS = {
+    "NBA":  "data/csv/nba_player_playoff_stats.csv",
+    "WNBA": "data/csv/wnba_player_playoff_stats.csv",
+}
+SHOTS_ZONES_CSVS = {
+    "NBA":  "data/csv/nba_shot_zone_summary.csv",
+    "WNBA": "data/csv/wnba_shot_zone_summary.csv",
+}
 OUT_JSON        = "data/output/players.json"
-FITTED_WEIGHTS_JSON = "data/output/fitted_weights.json"
+FITTED_WEIGHTS_JSONS = {
+    "NBA":  "data/output/fitted_weights_nba.json",
+    "WNBA": "data/output/fitted_weights_wnba.json",
+}
 DATABASE_URL    = os.environ.get("DATABASE_URL", "dbname=nba_cards")
 
 MIN_ZONE_ATTEMPTS = 20
 
 print("Loading data…")
-stats = pd.read_csv(STATS_CSV)
-zones = pd.read_csv(SHOTS_ZONES_CSV)
-print(f"  Stats : {stats.shape[0]:,} rows")
+stats_frames = []
+zones_frames = []
+for league, path in STATS_CSVS.items():
+    if not os.path.exists(path):
+        print(f"  [skip] {path} not found — no {league} data yet")
+        continue
+    df = pd.read_csv(path, dtype={"SEASON": str})
+    df["LEAGUE"] = league
+    stats_frames.append(df)
+    zpath = SHOTS_ZONES_CSVS[league]
+    if os.path.exists(zpath):
+        zdf = pd.read_csv(zpath, dtype={"SEASON": str})
+        zdf["LEAGUE"] = league
+        zones_frames.append(zdf)
+
+if not stats_frames:
+    raise SystemExit("No player stats CSVs found — run generate_player_dataset.py first")
+
+stats = pd.concat(stats_frames, ignore_index=True)
+zones = pd.concat(zones_frames, ignore_index=True) if zones_frames else pd.DataFrame()
+print(f"  Stats : {stats.shape[0]:,} rows ({stats['LEAGUE'].value_counts().to_dict()})")
 print(f"  Zones : {zones.shape[0]:,} rows")
 
 
@@ -114,7 +146,8 @@ zone_groups = {key: grp for key, grp in zones_basic.groupby(["PLAYER_ID", "SEASO
 stats["POSITION_LIST"]    = stats["POSITION"].apply(parse_positions)
 stats["PRIMARY_POSITION"] = stats["POSITION_LIST"].apply(lambda lst: lst[0])
 
-stats_f = stats[(stats["GP"] >= MIN_GP) & (stats["MIN"] >= MIN_MPG)].copy()
+_min_gp_threshold = stats["LEAGUE"].map(MIN_GP_BY_LEAGUE)
+stats_f = stats[(stats["GP"] >= _min_gp_threshold) & (stats["MIN"] >= MIN_MPG)].copy()
 print(f"  Players after GP/MIN filter: {len(stats_f):,} (from {len(stats):,})")
 
 
@@ -130,7 +163,15 @@ _MIN_AVAIL_PROMOTE     = 0.55
 _MIN_MPG_TIER          = 10.0
 _STARTER_FLOOR_MPG     = 28.0
 _ROTATION_FLOOR_MPG    = 15.0
-_FLOOR_MIN_GP          = 41
+
+# "Played about half the season" games-count floor — an absolute number, so it
+# has to scale with each league's season length (NBA 82 games vs WNBA ~40).
+FLOOR_MIN_GP_BY_LEAGUE = {"NBA": 41, "WNBA": 20}
+
+# Position groups behind the tiering impact bonuses below. NBA uses its 5-way
+# taxonomy; WNBA basketball-reference only distinguishes G/F/C.
+SCORING_ALPHA_POSITIONS = {"NBA": ["PG", "SG", "SF"], "WNBA": ["G"]}
+RIM_ANCHOR_POSITIONS    = {"NBA": ["C"], "WNBA": ["C"]}
 
 def _zscore(s: pd.Series) -> pd.Series:
     std = s.std(ddof=0)
@@ -139,6 +180,21 @@ def _zscore(s: pd.Series) -> pd.Series:
     return (s - s.mean()) / std
 
 def _recompute_tiers(df: pd.DataFrame) -> pd.DataFrame:
+    # Cross-season "did this player's tier persist" state below must never mix
+    # leagues — WNBA and NBA season strings sort interleaved (e.g. "2024" sorts
+    # right before "2024-25"), so a combined multi-league frame would leak one
+    # league's persisted Franchise Player/All-Star status into the other's very
+    # next iteration. Self-defend by splitting and recursing per league.
+    if "LEAGUE" in df.columns and df["LEAGUE"].nunique() > 1:
+        return pd.concat(
+            [_recompute_tiers(g) for _, g in df.groupby("LEAGUE")],
+            ignore_index=False,
+        )
+    league = df["LEAGUE"].iloc[0] if "LEAGUE" in df.columns and len(df) else "NBA"
+    _floor_min_gp = FLOOR_MIN_GP_BY_LEAGUE.get(league, 41)
+    _scoring_alpha_positions = SCORING_ALPHA_POSITIONS.get(league, SCORING_ALPHA_POSITIONS["NBA"])
+    _rim_anchor_positions = RIM_ANCHOR_POSITIONS.get(league, RIM_ANCHOR_POSITIONS["NBA"])
+
     df = df.copy()
     for col in ["PIE", "NET_RATING", "TS_PCT", "USG_PCT", "AST_PCT",
                 "STL", "BLK", "AST_TO", "E_TOV_PCT",
@@ -182,8 +238,8 @@ def _recompute_tiers(df: pd.DataFrame) -> pd.DataFrame:
         usg = e["USG_PCT"]
         ast = e["AST_PCT"]
         heliocentric  = (usg >= 0.26) & (ast >= 0.25)
-        scoring_alpha = (usg >= 0.28) & (ast >= 0.18) & pos.isin(["PG", "SG", "SF"])
-        rim_anchor    = (pos == "C")  & (usg < 0.18)  & (ast < 0.12)
+        scoring_alpha = (usg >= 0.28) & (ast >= 0.18) & pos.isin(_scoring_alpha_positions)
+        rim_anchor    = pos.isin(_rim_anchor_positions) & (usg < 0.18) & (ast < 0.12)
         impact[heliocentric]                   += 0.50
         impact[scoring_alpha & ~heliocentric]  += 0.50
         impact[rim_anchor]                     -= 0.45
@@ -261,9 +317,9 @@ def _recompute_tiers(df: pd.DataFrame) -> pd.DataFrame:
             t   = df.loc[idx, "TIER"]
             mpg = df.loc[idx, "MIN"]
             gp  = df.loc[idx, "GP"]
-            if t in ("Rotation", "Bench") and mpg >= _STARTER_FLOOR_MPG and gp >= _FLOOR_MIN_GP:
+            if t in ("Rotation", "Bench") and mpg >= _STARTER_FLOOR_MPG and gp >= _floor_min_gp:
                 df.loc[idx, "TIER"] = "Starter"
-            elif t == "Bench" and mpg >= _ROTATION_FLOOR_MPG and gp >= _FLOOR_MIN_GP:
+            elif t == "Bench" and mpg >= _ROTATION_FLOOR_MPG and gp >= _floor_min_gp:
                 df.loc[idx, "TIER"] = "Rotation"
 
         fo_after = eligible_mask & (df["TIER"] == "Franchise Player")
@@ -319,46 +375,56 @@ position_pools = {
 
 
 _FALLBACK_POSITION_WEIGHTS = {
-    "PG":      (0.38, 0.37, 0.13, 0.07, 0.05),
-    "SG":      (0.43, 0.20, 0.20, 0.12, 0.05),
-    "SF":      (0.36, 0.20, 0.27, 0.12, 0.05),
-    "PF":      (0.28, 0.14, 0.32, 0.21, 0.05),
-    "C":       (0.28, 0.13, 0.32, 0.22, 0.05),
-    "Forward": (0.33, 0.18, 0.30, 0.14, 0.05),
-    "Guard":   (0.38, 0.30, 0.19, 0.08, 0.05),
-    "Unknown": (0.38, 0.28, 0.22, 0.07, 0.05),
+    "NBA": {
+        "PG":      (0.38, 0.37, 0.13, 0.07, 0.05),
+        "SG":      (0.43, 0.20, 0.20, 0.12, 0.05),
+        "SF":      (0.36, 0.20, 0.27, 0.12, 0.05),
+        "PF":      (0.28, 0.14, 0.32, 0.21, 0.05),
+        "C":       (0.28, 0.13, 0.32, 0.22, 0.05),
+        "Forward": (0.33, 0.18, 0.30, 0.14, 0.05),
+        "Guard":   (0.38, 0.30, 0.19, 0.08, 0.05),
+        "Unknown": (0.38, 0.28, 0.22, 0.07, 0.05),
+    },
+    "WNBA": {
+        "G":       (0.40, 0.30, 0.20, 0.10, 0.05),
+        "F":       (0.34, 0.19, 0.29, 0.13, 0.05),
+        "C":       (0.28, 0.13, 0.32, 0.22, 0.05),
+        "Unknown": (0.35, 0.22, 0.26, 0.12, 0.05),
+    },
 }
 
-def _load_position_weights() -> dict:
-    if not os.path.exists(FITTED_WEIGHTS_JSON):
+def _load_position_weights(league: str) -> dict:
+    path = FITTED_WEIGHTS_JSONS[league]
+    if not os.path.exists(path):
         print(
-            f"\n  [warn] {FITTED_WEIGHTS_JSON} not found — using hardcoded fallback "
-            "position weights. Run `python data/fit_weights.py` to calibrate these "
-            "from data instead."
+            f"\n  [warn] {path} not found — using hardcoded fallback "
+            f"position weights for {league}. Run `python data/fit_weights.py` "
+            "to calibrate these from data instead."
         )
-        return _FALLBACK_POSITION_WEIGHTS
-    with open(FITTED_WEIGHTS_JSON) as f:
+        return _FALLBACK_POSITION_WEIGHTS[league]
+    with open(path) as f:
         fitted = json.load(f)
     weights = {
         pos: (w["scoring"], w["playmaking"], w["defense"], w["impact"], w["availability"])
         for pos, w in fitted.items()
         if pos != "meta"
     }
-    print(f"\n  Loaded fitted position weights from {FITTED_WEIGHTS_JSON} "
+    print(f"\n  Loaded fitted {league} position weights from {path} "
           f"(fitted_at={fitted.get('meta', {}).get('fitted_at', '?')})")
     return weights
 
-POSITION_WEIGHTS = _load_position_weights()
+POSITION_WEIGHTS = {league: _load_position_weights(league) for league in STATS_CSVS}
 
-def get_position_weights(position_list: list) -> tuple:
+def get_position_weights(position_list: list, league: str) -> tuple:
+    weights = POSITION_WEIGHTS[league]
     for pos in position_list:
-        if pos in POSITION_WEIGHTS:
-            return POSITION_WEIGHTS[pos]
+        if pos in weights:
+            return weights[pos]
     primary = position_list[0] if position_list else "Unknown"
-    for key in POSITION_WEIGHTS:
+    for key in weights:
         if primary.startswith(key):
-            return POSITION_WEIGHTS[key]
-    return POSITION_WEIGHTS["Unknown"]
+            return weights[key]
+    return weights["Unknown"]
 
 
 TIER_BOOSTS = {
@@ -369,9 +435,9 @@ TIER_BOOSTS = {
     "Bench":        0,
 }
 
-def ratings_from_row(row, p: dict, position_list=None) -> dict:
+def ratings_from_row(row, p: dict, position_list=None, league="NBA") -> dict:
     w_scoring, w_play, w_def, w_impact, w_avail = (
-        get_position_weights(position_list)
+        get_position_weights(position_list, league)
         if position_list is not None
         else (0.38, 0.28, 0.22, 0.07, 0.05)
     )
@@ -439,6 +505,7 @@ cards = []
 for _, row in stats_f.iterrows():
     season = row["SEASON"]
     pid    = int(row["PLAYER_ID"])
+    league = row["LEAGUE"]
 
     grp = zone_groups.get((pid, season))
     if grp is not None:
@@ -454,17 +521,18 @@ for _, row in stats_f.iterrows():
 
     hottest_zone = max(zone_prof.items(), key=lambda kv: kv[1]["hot_score"])[0] if zone_prof else None
 
-    league_rating      = ratings_from_row(row, league_pools[season], row["POSITION_LIST"])
+    league_rating      = ratings_from_row(row, league_pools[season], row["POSITION_LIST"], league)
     ratings_by_position = {}
     for pos in row["POSITION_LIST"]:
         pool = position_pools.get((season, pos))
         if pool is not None:
-            ratings_by_position[pos] = ratings_from_row(row, pool, [pos])
+            ratings_by_position[pos] = ratings_from_row(row, pool, [pos], league)
 
     card = {
         "player_id":   pid,
         "player_name": row["PLAYER_NAME"],
         "season":      season,
+        "league":      league,
         "team":        row["TEAM_ABBREVIATION"],
         "age":         safe(row["AGE"]),
 
@@ -568,7 +636,7 @@ payload = {
     "meta": {
         "total_cards":                      len(cards),
         "seasons":                          seasons_list,
-        "min_games_filter":                 MIN_GP,
+        "min_games_filter":                 MIN_GP_BY_LEAGUE,
         "min_mpg_filter":                   MIN_MPG,
         "min_zone_attempts_for_percentile": MIN_ZONE_ATTEMPTS,
         "tier_system": (
@@ -596,8 +664,11 @@ payload = {
             "for uncalculated rate stats; raw STL/BLK per game used instead."
         ),
         "position_weights": {
-            pos: dict(zip(["scoring", "playmaking", "defense", "impact", "availability"], w))
-            for pos, w in POSITION_WEIGHTS.items()
+            league: {
+                pos: dict(zip(["scoring", "playmaking", "defense", "impact", "availability"], w))
+                for pos, w in weights.items()
+            }
+            for league, weights in POSITION_WEIGHTS.items()
         },
     },
     "players": cards,
@@ -611,6 +682,113 @@ print(f"  Written → {OUT_JSON}  ({size_kb:,.0f} KB)")
 
 
 load_to_postgres(cards, DATABASE_URL)
+
+
+print("\nBuilding playoff cards…")
+playoff_frames = []
+for league, path in PLAYOFF_STATS_CSVS.items():
+    if not os.path.exists(path):
+        print(f"  [skip] {path} not found — no {league} playoff data yet")
+        continue
+    pdf = pd.read_csv(path, dtype={"SEASON": str})
+    pdf["LEAGUE"] = league
+    playoff_frames.append(pdf)
+
+playoff_cards = []
+if playoff_frames:
+    playoff_stats = pd.concat(playoff_frames, ignore_index=True)
+    playoff_stats["POSITION_LIST"] = playoff_stats["POSITION"].apply(parse_positions)
+    playoff_stats["PRIMARY_POSITION"] = playoff_stats["POSITION_LIST"].apply(lambda lst: lst[0])
+
+    playoff_stats_f = playoff_stats[playoff_stats["GP"] >= PLAYOFF_MIN_GP].copy()
+    print(f"  Playoff rows after GP filter: {len(playoff_stats_f):,} (from {len(playoff_stats):,})")
+
+    # Fully separate from the regular-season pools above — a playoff run's
+    # per-game stats (small, survivorship-biased samples) must never be
+    # percentile-ranked against the regular-season population or vice versa.
+    playoff_pools = {s: build_pool(g) for s, g in playoff_stats_f.groupby("SEASON")}
+
+    # Stateless cutoff label, recomputed fresh every run — no cross-season
+    # persistence, unlike the Franchise Player/All-Star tier system (which
+    # doesn't translate to ~4-28 game playoff samples; see generate_player_dataset.py).
+    def playoff_badge_for(overall: int) -> str | None:
+        if overall >= 90:
+            return "Playoff Elite"
+        if overall >= 75:
+            return "Playoff Riser"
+        return None
+
+    for _, row in playoff_stats_f.iterrows():
+        season = row["SEASON"]
+        pid    = int(row["PLAYER_ID"])
+        league = row["LEAGUE"]
+
+        rating = ratings_from_row(row, playoff_pools[season], row["POSITION_LIST"], league)
+
+        playoff_cards.append({
+            "player_id":   pid,
+            "player_name": row["PLAYER_NAME"],
+            "season":      season,
+            "league":      league,
+            "team":        row["TEAM_ABBREVIATION"],
+            "age":         safe(row["AGE"]),
+
+            "positions":        row["POSITION_LIST"],
+            "primary_position": row["PRIMARY_POSITION"],
+
+            "playoff_badge": playoff_badge_for(rating["overall"]),
+            "games_played":  int(row["GP"]),
+
+            "ratings": rating,
+
+            "per_game": {
+                "pts":  safe(row["PTS"]),
+                "reb":  safe(row["REB"]),
+                "ast":  safe(row["AST"]),
+                "stl":  safe(row["STL"]),
+                "blk":  safe(row["BLK"]),
+                "tov":  safe(row["TOV"]),
+                "min":  safe(row["MIN"]),
+                "oreb": safe(row["OREB"]),
+                "dreb": safe(row["DREB"]),
+            },
+
+            "scoring": {
+                "fg_pct":        safe(row["FG_PCT"]),
+                "fg3_pct":       safe(row["FG3_PCT"]),
+                "ft_pct":        safe(row["FT_PCT"]),
+                "efg_pct":       safe(row["EFG_PCT"]),
+                "ts_pct":        safe(row["TS_PCT"]),
+                "fg3a_per_game": safe(row["FG3A"]),
+                "fga_per_game":  safe(row["FGA"]),
+                "pct_uast_fgm":  safe(row.get("PCT_UAST_FGM")),
+            },
+
+            "advanced": {
+                "off_rating": safe(row["OFF_RATING"]),
+                "def_rating": safe(row["DEF_RATING"]),
+                "net_rating": safe(row["NET_RATING"]),
+                "ast_pct":    safe(row["AST_PCT"]),
+                "ast_to":     safe(row["AST_TO"]),
+                "usg_pct":    safe(row["USG_PCT"]),
+                "oreb_pct":   safe(row["OREB_PCT"]),
+                "dreb_pct":   safe(row["DREB_PCT"]),
+                "pie":        safe(row["PIE"]),
+                "pace":       safe(row["PACE"]),
+                "plus_minus": safe(row["PLUS_MINUS"]),
+                "e_tov_pct":  safe(row["E_TOV_PCT"]),
+            },
+
+            "clutch": {
+                "clutch_plus_minus": safe(row.get("CLUTCH_PLUS_MINUS")),
+            },
+        })
+
+    print(f"✓ {len(playoff_cards):,} playoff cards")
+else:
+    print("  No playoff CSVs found — skipping playoff cards.")
+
+load_playoff_seasons_to_postgres(playoff_cards, DATABASE_URL)
 
 
 print("\n── Top 30 overall (latest season) ──")

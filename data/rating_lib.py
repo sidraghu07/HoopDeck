@@ -2,7 +2,14 @@ import pandas as pd
 import numpy as np
 
 MIN_GP = 10
+MIN_GP_BY_LEAGUE = {"NBA": 10, "WNBA": 5}
 MIN_MPG = 5.0
+
+# Playoff eligibility is far looser than the regular-season gates above — a
+# single playoff game is legitimately "all the data that exists" for that
+# player, and percentile ranking already handles small samples without an
+# MPG floor.
+PLAYOFF_MIN_GP = 1
 
 
 def parse_positions(pos_str):

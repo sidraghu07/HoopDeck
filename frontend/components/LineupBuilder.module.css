@@ -24,6 +24,35 @@
   height: fit-content;
 }
 
+.leagueToggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.leagueBtn {
+  flex: 1;
+  background: var(--bg-void);
+  border: 2px solid var(--border-muted);
+  color: var(--text-muted);
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px;
+  padding: 8px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+
+.leagueBtn:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.leagueBtnActive {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 10px rgba(232, 179, 57, 0.25);
+}
+
 .searchBox {
   display: flex;
   align-items: center;

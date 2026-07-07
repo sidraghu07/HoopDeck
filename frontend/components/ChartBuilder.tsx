@@ -39,7 +39,7 @@ type StatRow = PlayerStatRow | TeamStatRow;
 const COLORS = ["#e8b339", "#a99bc4", "#6b9bd1", "#d16b9b", "#6bd1a0", "#d19b6b"];
 const MAX_TREND_ENTITIES = COLORS.length;
 
-function seasonList(): string[] {
+function nbaSeasonList(): string[] {
   const seasons: string[] = [];
   for (let y = 2025; y >= 1996; y--) {
     seasons.push(`${y}-${String((y + 1) % 100).padStart(2, "0")}`);
@@ -47,14 +47,25 @@ function seasonList(): string[] {
   return seasons;
 }
 
-const SEASONS = seasonList();
+function wnbaSeasonList(): string[] {
+  const seasons: string[] = [];
+  for (let y = 2025; y >= 1997; y--) {
+    seasons.push(String(y));
+  }
+  return seasons;
+}
 
-function seasonsInRange(from: string, to: string): string[] {
-  const i1 = SEASONS.indexOf(from);
-  const i2 = SEASONS.indexOf(to);
+const SEASONS_BY_LEAGUE: Record<string, string[]> = {
+  NBA: nbaSeasonList(),
+  WNBA: wnbaSeasonList(),
+};
+
+function seasonsInRange(seasons: string[], from: string, to: string): string[] {
+  const i1 = seasons.indexOf(from);
+  const i2 = seasons.indexOf(to);
   if (i1 === -1 || i2 === -1) return [from];
   const [lo, hi] = i1 < i2 ? [i1, i2] : [i2, i1];
-  return SEASONS.slice(lo, hi + 1);
+  return seasons.slice(lo, hi + 1);
 }
 
 const QUADRANT_COLORS = {
@@ -168,6 +179,7 @@ function flatRowToSeasonCard(row: PlayerStatRow): PlayerSeasonCard {
     player_id: row.player_id,
     player_name: row.player_name,
     season: row.season,
+    league: row.league,
     team: row.team,
     primary_position: row.primary_position,
     tier: row.tier,
@@ -199,9 +211,11 @@ interface TrendEntity {
 }
 
 export default function ChartBuilder() {
+  const [league, setLeague] = useState<"NBA" | "WNBA">("NBA");
   const [entityType, setEntityType] = useState<EntityType>("players");
   const [mode, setMode] = useState<Mode>("trend");
 
+  const seasons = SEASONS_BY_LEAGUE[league];
   const statGroups: StatGroup[] = entityType === "players" ? PLAYER_STAT_GROUPS : TEAM_STAT_GROUPS;
   const defaultStatKey = statGroups[0].stats[0].key;
   const defaultSecondStatKey = statGroups[0].stats[1]?.key ?? defaultStatKey;
@@ -213,15 +227,15 @@ export default function ChartBuilder() {
   const [trendStat, setTrendStat] = useState(defaultStatKey);
   const [trendLoading, setTrendLoading] = useState(false);
 
-  const [rankingSeason, setRankingSeason] = useState(SEASONS[0]);
+  const [rankingSeason, setRankingSeason] = useState(seasons[0]);
   const [rankingStat, setRankingStat] = useState(defaultStatKey);
   const [rankingTopN, setRankingTopN] = useState(10);
   const [rankingDirection, setRankingDirection] = useState<"desc" | "asc">("desc");
   const [rankingRows, setRankingRows] = useState<StatRow[]>([]);
   const [rankingLoading, setRankingLoading] = useState(false);
 
-  const [corrSeasonFrom, setCorrSeasonFrom] = useState(SEASONS[0]);
-  const [corrSeasonTo, setCorrSeasonTo] = useState(SEASONS[0]);
+  const [corrSeasonFrom, setCorrSeasonFrom] = useState(seasons[0]);
+  const [corrSeasonTo, setCorrSeasonTo] = useState(seasons[0]);
   const [corrXStat, setCorrXStat] = useState(defaultStatKey);
   const [corrYStat, setCorrYStat] = useState(defaultSecondStatKey);
   const [corrRows, setCorrRows] = useState<StatRow[]>([]);
@@ -235,18 +249,24 @@ export default function ChartBuilder() {
   const router = useRouter();
 
   const corrSeasonRange = useMemo(
-    () => seasonsInRange(corrSeasonFrom, corrSeasonTo),
-    [corrSeasonFrom, corrSeasonTo]
+    () => seasonsInRange(seasons, corrSeasonFrom, corrSeasonTo),
+    [seasons, corrSeasonFrom, corrSeasonTo]
   );
 
   const [resetForEntityType, setResetForEntityType] = useState(entityType);
-  if (entityType !== resetForEntityType) {
+  const [resetForLeague, setResetForLeague] = useState(league);
+  if (entityType !== resetForEntityType || league !== resetForLeague) {
     setResetForEntityType(entityType);
+    setResetForLeague(league);
     setTrendEntities([]);
     setTrendQuery("");
     setTrendSearchResults([]);
+    setTeamList([]);
     setTrendStat(statGroups[0].stats[0].key);
     setRankingStat(statGroups[0].stats[0].key);
+    setRankingSeason(seasons[0]);
+    setCorrSeasonFrom(seasons[0]);
+    setCorrSeasonTo(seasons[0]);
     setCorrXStat(statGroups[0].stats[0].key);
     setCorrYStat(statGroups[0].stats[1]?.key ?? statGroups[0].stats[0].key);
     setRankingRows([]);
@@ -258,11 +278,11 @@ export default function ChartBuilder() {
 
   useEffect(() => {
     if (entityType === "teams" && mode === "trend" && teamList.length === 0) {
-      getTeamList()
+      getTeamList(league)
         .then(setTeamList)
         .catch(() => setTeamList([]));
     }
-  }, [entityType, mode, teamList.length]);
+  }, [entityType, mode, teamList.length, league]);
 
   useEffect(() => {
     if (entityType !== "players" || mode !== "trend") return;
@@ -271,7 +291,7 @@ export default function ChartBuilder() {
     }
     let cancelled = false;
     const timeout = setTimeout(() => {
-      getPlayers({ season: "ALL", name: trendQuery, page: 1 })
+      getPlayers({ season: "ALL", league, name: trendQuery, page: 1 })
         .then((data) => {
           if (!cancelled) setTrendSearchResults(data?.players ?? []);
         })
@@ -283,31 +303,33 @@ export default function ChartBuilder() {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [trendQuery, entityType, mode]);
+  }, [trendQuery, entityType, mode, league]);
 
   useEffect(() => {
     if (mode !== "ranking") return;
     setRankingLoading(true);
     const fetcher =
-      entityType === "players" ? getPlayerStatsBySeason(rankingSeason) : getTeamStatsBySeason(rankingSeason);
+      entityType === "players"
+        ? getPlayerStatsBySeason(rankingSeason, league)
+        : getTeamStatsBySeason(rankingSeason, league);
     fetcher
       .then((rows) => setRankingRows(rows ?? []))
       .catch(() => setRankingRows([]))
       .finally(() => setRankingLoading(false));
-  }, [mode, entityType, rankingSeason]);
+  }, [mode, entityType, rankingSeason, league]);
 
   useEffect(() => {
     if (mode !== "correlation") return;
     setCorrLoading(true);
     const fetcher =
       entityType === "players"
-        ? getPlayerStatsBySeasons(corrSeasonRange)
-        : getTeamStatsBySeasons(corrSeasonRange);
+        ? getPlayerStatsBySeasons(corrSeasonRange, league)
+        : getTeamStatsBySeasons(corrSeasonRange, league);
     fetcher
       .then((rows) => setCorrRows(rows ?? []))
       .catch(() => setCorrRows([]))
       .finally(() => setCorrLoading(false));
-  }, [mode, entityType, corrSeasonRange]);
+  }, [mode, entityType, corrSeasonRange, league]);
 
   function addPlayerTrendEntity(c: CareerCard) {
     if (trendEntities.length >= MAX_TREND_ENTITIES) return;
@@ -329,7 +351,7 @@ export default function ChartBuilder() {
     if (trendEntities.length >= MAX_TREND_ENTITIES) return;
     if (trendEntities.some((e) => e.id === item.team)) return;
     setTrendLoading(true);
-    getTeamStats([item.team])
+    getTeamStats([item.team], league)
       .then((rows: TeamStatRow[]) => {
         setTrendEntities((prev) => [
           ...prev,
@@ -455,6 +477,14 @@ export default function ChartBuilder() {
   return (
     <div className={styles.wrap}>
       <div className={styles.toolbar}>
+        <ToggleGroup
+          value={league}
+          options={[
+            { value: "NBA", label: "NBA" },
+            { value: "WNBA", label: "WNBA" },
+          ]}
+          onChange={(v) => setLeague(v as "NBA" | "WNBA")}
+        />
         <ToggleGroup
           value={entityType}
           options={[
@@ -642,7 +672,7 @@ export default function ChartBuilder() {
       {mode === "ranking" && (
         <div className={styles.controls}>
           <div className={styles.controlsRow}>
-            <SeasonSelect value={rankingSeason} onChange={setRankingSeason} />
+            <SeasonSelect value={rankingSeason} onChange={setRankingSeason} seasons={seasons} />
             <StatSelect label="STAT" value={rankingStat} onChange={setRankingStat} groups={statGroups} />
             <label className={styles.selectWrap}>
               <span className={styles.selectLabel}>TOP</span>
@@ -692,8 +722,8 @@ export default function ChartBuilder() {
       {mode === "correlation" && (
         <div className={styles.controls}>
           <div className={styles.controlsRow}>
-            <SeasonSelect label="FROM" value={corrSeasonFrom} onChange={setCorrSeasonFrom} />
-            <SeasonSelect label="TO" value={corrSeasonTo} onChange={setCorrSeasonTo} />
+            <SeasonSelect label="FROM" value={corrSeasonFrom} onChange={setCorrSeasonFrom} seasons={seasons} />
+            <SeasonSelect label="TO" value={corrSeasonTo} onChange={setCorrSeasonTo} seasons={seasons} />
             <StatSelect label="X AXIS" value={corrXStat} onChange={setCorrXStat} groups={statGroups} />
             <StatSelect label="Y AXIS" value={corrYStat} onChange={setCorrYStat} groups={statGroups} />
             {entityType === "players" && (
@@ -945,16 +975,18 @@ function SeasonSelect({
   label = "SEASON",
   value,
   onChange,
+  seasons,
 }: {
   label?: string;
   value: string;
   onChange: (v: string) => void;
+  seasons: string[];
 }) {
   return (
     <label className={styles.selectWrap}>
       <span className={styles.selectLabel}>{label}</span>
       <select className={styles.select} value={value} onChange={(e) => onChange(e.target.value)}>
-        {SEASONS.map((s) => (
+        {seasons.map((s) => (
           <option key={s} value={s}>
             {s}
           </option>

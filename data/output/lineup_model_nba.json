@@ -1,0 +1,40 @@
+{
+  "stage_a": {
+    "features": [
+      "avg_scoring",
+      "avg_playmaking",
+      "avg_defense",
+      "avg_impact",
+      "avg_overall",
+      "star_power",
+      "bench_overall"
+    ],
+    "coef": [
+      -0.3394090039916651,
+      -0.006161652925018635,
+      0.02856421018843798,
+      0.5869161153540807,
+      0.5568290024287561,
+      0.09099127100927643,
+      0.03892083845443084
+    ],
+    "intercept": -72.58830602708376,
+    "r2_in_sample": 0.9169,
+    "r2_holdout": 0.8978
+  },
+  "stage_b": {
+    "coef": 0.030945829905693754,
+    "intercept": 0.4996522719418786,
+    "r2_in_sample": 0.9371,
+    "r2_holdout": 0.9352
+  },
+  "meta": {
+    "n_team_seasons_matched": 892,
+    "holdout_seasons": [
+      "2023-24",
+      "2024-25",
+      "2025-26"
+    ],
+    "fitted_at": "2026-07-02T14:17:58.253193+00:00"
+  }
+}

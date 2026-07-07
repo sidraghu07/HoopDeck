@@ -11,11 +11,21 @@ from sklearn.metrics import r2_score
 
 from db.loader import load_team_seasons
 
-TEAM_CSV = "data/csv/nba_team_season_stats.csv"
-OUT_JSON = "data/output/lineup_model.json"
+LEAGUE = os.environ.get("LEAGUE", "NBA")
+if LEAGUE not in ("NBA", "WNBA"):
+    raise ValueError(f"Unsupported LEAGUE={LEAGUE!r}, expected 'NBA' or 'WNBA'")
+
+TEAM_CSV = f"data/csv/{'nba' if LEAGUE == 'NBA' else 'wnba'}_team_season_stats.csv"
+OUT_JSON = f"data/output/lineup_model_{'nba' if LEAGUE == 'NBA' else 'wnba'}.json"
 DATABASE_URL = os.environ.get("DATABASE_URL", "dbname=nba_cards")
 
-HOLDOUT_SEASONS = {"2023-24", "2024-25", "2025-26"}
+# WNBA has a smaller, noisier sample (fewer teams/seasons) than NBA, so its
+# Stage A/B fits get heavier Ridge regularization by default.
+ALPHA = 1.0 if LEAGUE == "NBA" else 3.0
+
+HOLDOUT_SEASONS = (
+    {"2023-24", "2024-25", "2025-26"} if LEAGUE == "NBA" else {"2023", "2024", "2025"}
+)
 FEATURES = [
     "avg_scoring", "avg_playmaking", "avg_defense", "avg_impact",
     "avg_overall", "star_power", "bench_overall",
@@ -48,7 +58,7 @@ def roster_features(sub_df: pd.DataFrame) -> dict:
 
 
 print("Loading team-season outcomes…")
-teams = pd.read_csv(TEAM_CSV)
+teams = pd.read_csv(TEAM_CSV, dtype={"SEASON": str})
 
 print("Loading player-season ratings from Postgres…")
 with psycopg.connect(DATABASE_URL) as conn:
@@ -56,7 +66,8 @@ with psycopg.connect(DATABASE_URL) as conn:
         cur.execute(
             "SELECT player_id, season, team, rating_overall, rating_scoring, "
             "rating_playmaking, rating_defense, rating_impact, games_played, pg_min "
-            "FROM player_seasons"
+            "FROM player_seasons WHERE league = %(league)s",
+            {"league": LEAGUE},
         )
         rows = cur.fetchall()
 players = pd.DataFrame(rows)
@@ -81,7 +92,7 @@ train = merged[~merged["season"].isin(HOLDOUT_SEASONS)]
 test = merged[merged["season"].isin(HOLDOUT_SEASONS)]
 
 X_train, y_train = train[FEATURES].values, train["NET_RATING"].values
-model_a = Ridge(alpha=1.0)
+model_a = Ridge(alpha=ALPHA)
 model_a.fit(X_train, y_train)
 r2_a_in = r2_score(y_train, model_a.predict(X_train))
 r2_a_holdout = (
@@ -98,7 +109,7 @@ teams_test = teams[teams["SEASON"].isin(HOLDOUT_SEASONS)]
 Xb_train, yb_train = teams_train[["NET_RATING"]].values, teams_train["W_PCT"].values
 Xb_test, yb_test = teams_test[["NET_RATING"]].values, teams_test["W_PCT"].values
 
-model_b = Ridge(alpha=1.0)
+model_b = Ridge(alpha=ALPHA)
 model_b.fit(Xb_train, yb_train)
 r2_b_in = r2_score(yb_train, model_b.predict(Xb_train))
 r2_b_holdout = r2_score(yb_test, model_b.predict(Xb_test)) if len(Xb_test) else None

@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime, timezone
 
 import numpy as np
@@ -6,19 +7,35 @@ import pandas as pd
 from sklearn.linear_model import Ridge
 from sklearn.metrics import r2_score
 
-from rating_lib import MIN_GP, MIN_MPG, _pr, build_pool, parse_positions
+from rating_lib import MIN_GP_BY_LEAGUE, MIN_MPG, _pr, build_pool, parse_positions
 
-STATS_CSV = "data/csv/nba_player_base_stats.csv"
-OUT_JSON = "data/output/fitted_weights.json"
+LEAGUE = os.environ.get("LEAGUE", "NBA")
+if LEAGUE not in ("NBA", "WNBA"):
+    raise ValueError(f"Unsupported LEAGUE={LEAGUE!r}, expected 'NBA' or 'WNBA'")
 
-HOLDOUT_SEASONS = {"2023-24", "2024-25", "2025-26"}
+MIN_GP = MIN_GP_BY_LEAGUE[LEAGUE]
+STATS_CSV = f"data/csv/{'nba' if LEAGUE == 'NBA' else 'wnba'}_player_base_stats.csv"
+OUT_JSON = f"data/output/fitted_weights_{'nba' if LEAGUE == 'NBA' else 'wnba'}.json"
 
-POSITION_GROUPS = ["PG", "SG", "SF", "PF", "C", "Forward", "Guard", "Unknown"]
+# Ridge alpha: WNBA has roughly a third of NBA's sample size (fewer teams,
+# fewer seasons of clean data), so it gets heavier regularization by default
+# to avoid overfitting per-position idiosyncrasies. Revisit after inspecting
+# holdout R2 in this script's own printed output.
+ALPHA = 1.0 if LEAGUE == "NBA" else 3.0
 
-FIXED_IMPACT_WEIGHT = {
-    "PG": 0.07, "SG": 0.12, "SF": 0.12, "PF": 0.21, "C": 0.22,
-    "Forward": 0.14, "Guard": 0.08, "Unknown": 0.07,
-}
+if LEAGUE == "NBA":
+    HOLDOUT_SEASONS = {"2023-24", "2024-25", "2025-26"}
+    POSITION_GROUPS = ["PG", "SG", "SF", "PF", "C", "Forward", "Guard", "Unknown"]
+    FIXED_IMPACT_WEIGHT = {
+        "PG": 0.07, "SG": 0.12, "SF": 0.12, "PF": 0.21, "C": 0.22,
+        "Forward": 0.14, "Guard": 0.08, "Unknown": 0.07,
+    }
+else:
+    HOLDOUT_SEASONS = {"2023", "2024", "2025"}
+    POSITION_GROUPS = ["G", "F", "C", "Unknown"]
+    FIXED_IMPACT_WEIGHT = {
+        "G": 0.09, "F": 0.15, "C": 0.22, "Unknown": 0.12,
+    }
 
 BUCKET_FEATURES = {
     "scoring": [
@@ -41,7 +58,7 @@ FEATURE_COLS = [feat for feats in BUCKET_FEATURES.values() for feat, _, _ in fea
 FEATURE_SPECS = [(f, li, src) for feats in BUCKET_FEATURES.values() for f, li, src in feats]
 
 print("Loading data…")
-stats = pd.read_csv(STATS_CSV)
+stats = pd.read_csv(STATS_CSV, dtype={"SEASON": str})
 stats["POSITION_LIST"] = stats["POSITION"].apply(parse_positions)
 stats["PRIMARY_POSITION"] = stats["POSITION_LIST"].apply(lambda lst: lst[0])
 
@@ -72,11 +89,11 @@ def fit_position(group: pd.DataFrame) -> dict | None:
     X_train, y_train = train[FEATURE_COLS].values, train["net_rating"].values
 
     try:
-        model = Ridge(alpha=1.0, positive=True)
+        model = Ridge(alpha=ALPHA, positive=True)
         model.fit(X_train, y_train)
         coefs = model.coef_
     except Exception:
-        model = Ridge(alpha=1.0)
+        model = Ridge(alpha=ALPHA)
         model.fit(X_train, y_train)
         coefs = np.clip(model.coef_, 0, None)
 

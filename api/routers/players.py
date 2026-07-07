@@ -16,9 +16,9 @@ TIER_RANK_SQL = """
 """
 
 
-def _build_filters(tier: str | None, position: str | None, name: str | None):
-    clauses: list[str] = []
-    params: dict = {}
+def _build_filters(league: str, tier: str | None, position: str | None, name: str | None):
+    clauses: list[str] = ["league = %(league)s"]
+    params: dict = {"league": league}
     if tier:
         clauses.append("tier = %(tier)s")
         params["tier"] = tier
@@ -36,6 +36,7 @@ def _season_card(r: dict) -> dict:
         "player_id": r["player_id"],
         "player_name": r["player_name"],
         "season": r["season"],
+        "league": r["league"],
         "team": r["team"],
         "primary_position": r["primary_position"],
         "tier": r["tier"],
@@ -58,6 +59,7 @@ def _career_card(r: dict) -> dict:
     return {
         "player_id": r["player_id"],
         "player_name": r["player_name"],
+        "league": r["league"],
         "career": {
             "bestTier": r["best_tier"],
             "bestOverall": r["best_overall"],
@@ -104,6 +106,7 @@ SORT_COLUMNS_CAREER = {
 @router.get("/api/players")
 def get_players(
     season: str | None = None,
+    league: str = "NBA",
     tier: str | None = None,
     position: str | None = None,
     name: str | None = None,
@@ -118,10 +121,13 @@ def get_players(
 
     with pool.connection() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("SELECT DISTINCT season FROM player_seasons ORDER BY season DESC")
+            cur.execute(
+                "SELECT DISTINCT season FROM player_seasons WHERE league = %(league)s ORDER BY season DESC",
+                {"league": league},
+            )
             seasons = [r["season"] for r in cur.fetchall()]
 
-            clauses, params = _build_filters(tier, position, name)
+            clauses, params = _build_filters(league, tier, position, name)
 
             if season and season != "ALL":
                 sort_col = SORT_COLUMNS_SEASON.get(sort, SORT_COLUMNS_SEASON["overall"])
@@ -130,7 +136,7 @@ def get_players(
                 where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
                 cur.execute(
                     f"""
-                    SELECT player_seasons.player_id, season, player_name, team, primary_position, tier,
+                    SELECT player_seasons.player_id, season, league, player_name, team, primary_position, tier,
                            rating_overall, rating_scoring, rating_playmaking, rating_defense,
                            rating_impact, pg_pts, pg_reb, pg_ast, pg_stl, pg_blk, pg_min,
                            COALESCE(player_photos.has_photo, true) AS has_photo
@@ -158,6 +164,7 @@ def get_players(
                 agg AS (
                     SELECT
                         player_id,
+                        (array_agg(league))[1] AS league,
                         (array_agg(player_name ORDER BY season DESC))[1] AS player_name,
                         (array_agg(primary_position ORDER BY season DESC))[1] AS primary_position,
                         (array_agg(has_photo))[1] AS has_photo,
@@ -251,6 +258,7 @@ def get_player(player_id: int, season: str | None = None):
             "player_id": r["player_id"],
             "player_name": r["player_name"],
             "season": r["season"],
+            "league": r["league"],
             "team": r["team"],
             "age": r["age"],
             "positions": r["positions"],
@@ -292,3 +300,58 @@ def get_player(player_id: int, season: str | None = None):
         }
 
     return [_full_season(r) for r in season_rows]
+
+
+@router.get("/api/players/{player_id}/playoffs")
+def get_player_playoffs(player_id: int, season: str | None = None):
+    with pool.connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            clauses = ["player_id = %(player_id)s"]
+            params: dict = {"player_id": player_id}
+            if season:
+                clauses.append("season = %(season)s")
+                params["season"] = season
+            cur.execute(
+                f"SELECT * FROM player_playoff_seasons WHERE {' AND '.join(clauses)} ORDER BY season",
+                params,
+            )
+            rows = cur.fetchall()
+
+    def _full_playoff_season(r: dict) -> dict:
+        return {
+            "player_id": r["player_id"],
+            "player_name": r["player_name"],
+            "season": r["season"],
+            "league": r["league"],
+            "team": r["team"],
+            "age": r["age"],
+            "positions": r["positions"],
+            "primary_position": r["primary_position"],
+            "playoff_badge": r["playoff_badge"],
+            "games_played": r["games_played"],
+            "ratings": {
+                "overall": r["rating_overall"], "scoring": r["rating_scoring"],
+                "playmaking": r["rating_playmaking"], "defense": r["rating_defense"],
+                "impact": r["rating_impact"],
+            },
+            "per_game": {
+                "pts": r["pg_pts"], "reb": r["pg_reb"], "ast": r["pg_ast"],
+                "stl": r["pg_stl"], "blk": r["pg_blk"], "tov": r["pg_tov"],
+                "min": r["pg_min"], "oreb": r["pg_oreb"], "dreb": r["pg_dreb"],
+            },
+            "scoring": {
+                "fg_pct": r["fg_pct"], "fg3_pct": r["fg3_pct"], "ft_pct": r["ft_pct"],
+                "efg_pct": r["efg_pct"], "ts_pct": r["ts_pct"],
+                "fg3a_per_game": r["fg3a_per_game"], "fga_per_game": r["fga_per_game"],
+                "pct_uast_fgm": r["pct_uast_fgm"],
+            },
+            "advanced": {
+                "off_rating": r["off_rating"], "def_rating": r["def_rating"], "net_rating": r["net_rating"],
+                "ast_pct": r["ast_pct"], "ast_to": r["ast_to"], "usg_pct": r["usg_pct"],
+                "oreb_pct": r["oreb_pct"], "dreb_pct": r["dreb_pct"], "pie": r["pie"],
+                "pace": r["pace"], "plus_minus": r["plus_minus"], "e_tov_pct": r["e_tov_pct"],
+            },
+            "clutch": {"clutch_plus_minus": r["clutch_plus_minus"]},
+        }
+
+    return [_full_playoff_season(r) for r in rows]

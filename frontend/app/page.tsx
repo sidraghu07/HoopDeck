@@ -6,7 +6,7 @@ import { getPlayers } from "@/lib/api";
 import { PlayerSeasonCard } from "@/lib/types";
 import styles from "./page.module.css";
 
-const FEATURED_SEASON = "2025-26";
+const FEATURED_SEASON: Record<string, string> = { NBA: "2025-26", WNBA: "2025" };
 const GALLERY_SIZE = 8;
 const MIN_OVERALL = 80;
 
@@ -22,8 +22,11 @@ function pickRandom<T>(pool: T[], count: number): T[] {
 export default async function HomePage() {
   let players: PlayerSeasonCard[] = [];
   try {
-    const data = await getPlayers({ season: FEATURED_SEASON });
-    players = data?.players ?? [];
+    const [nba, wnba] = await Promise.all([
+      getPlayers({ season: FEATURED_SEASON.NBA, league: "NBA" }),
+      getPlayers({ season: FEATURED_SEASON.WNBA, league: "WNBA" }),
+    ]);
+    players = [...(nba?.players ?? []), ...(wnba?.players ?? [])];
   } catch {
   }
 
