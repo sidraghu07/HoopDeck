@@ -62,7 +62,14 @@ else:
 if SEASONS_OVERRIDE:
     _override_seasons = [s.strip() for s in SEASONS_OVERRIDE.split(",") if s.strip()]
     seasons = [s for s in seasons if s in _override_seasons] or _override_seasons
-    SEASON_TO_BREF_YEAR = {s: SEASON_TO_BREF_YEAR[s] for s in seasons if s in SEASON_TO_BREF_YEAR}
+    # Recompute (not filter) the bref-year mapping for the override seasons —
+    # an override season from a future/newly-started year (e.g. a brand new
+    # WNBA calendar year) won't be a key in the historical dict above, and
+    # filtering it out silently emptied SEASON_TO_BREF_YEAR, which made the
+    # position scrape loop run zero iterations and fall back to "Unknown"
+    # for every player that season.
+    _bref_year = (lambda s: int(s[:4]) + 1) if LEAGUE == "NBA" else (lambda s: int(s))
+    SEASON_TO_BREF_YEAR = {s: _bref_year(s) for s in seasons}
 
 HEADERS = {
     "User-Agent": (
