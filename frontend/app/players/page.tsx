@@ -3,7 +3,7 @@ import { getPlayers } from "@/lib/api";
 import { CareerCard, PlayerSeasonCard } from "@/lib/types";
 import PlayersExplorer from "@/components/PlayersExplorer";
 
-const DEFAULT_SEASON: Record<string, string> = { NBA: "2025-26", WNBA: "2025" };
+const DEFAULT_SEASON: Record<string, string> = { NBA: "2025-26", WNBA: "2026" };
 const LEAGUES = ["NBA", "WNBA"];
 
 interface PageProps {

@@ -6,7 +6,7 @@ import { getPlayers } from "@/lib/api";
 import { PlayerSeasonCard } from "@/lib/types";
 import styles from "./page.module.css";
 
-const FEATURED_SEASON: Record<string, string> = { NBA: "2025-26", WNBA: "2025" };
+const FEATURED_SEASON: Record<string, string> = { NBA: "2025-26", WNBA: "2026" };
 const GALLERY_SIZE = 8;
 const MIN_OVERALL = 80;
 

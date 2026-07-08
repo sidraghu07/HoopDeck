@@ -49,7 +49,7 @@ function nbaSeasonList(): string[] {
 
 function wnbaSeasonList(): string[] {
   const seasons: string[] = [];
-  for (let y = 2025; y >= 1997; y--) {
+  for (let y = 2026; y >= 1997; y--) {
     seasons.push(String(y));
   }
   return seasons;
