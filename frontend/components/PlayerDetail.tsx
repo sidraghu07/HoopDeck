@@ -55,6 +55,15 @@ export default function PlayerDetail({ seasons, active, playoffsBySeason }: Prop
   const showPlayoffs = searchParams.get("view") === "playoffs" && !!playoffData;
   const displayed = showPlayoffs ? toDisplaySeason(active, playoffData) : active;
 
+  // The Players page's full search state (league/season/name/tier/position/
+  // sort/dir/page), carried here by whatever link sent us to this page, so
+  // BACK restores that exact view instead of resetting filters. Also carried
+  // through the season-tab/playoffs-toggle links below so it survives
+  // further navigation within this page.
+  const fromQuery = searchParams.get("from");
+  const backHref = fromQuery ? `/players?${fromQuery}` : `/players?season=${active.season}`;
+  const fromSuffix = fromQuery ? `&from=${encodeURIComponent(fromQuery)}` : "";
+
   const style = TIER_STYLE[active.tier] ?? TIER_STYLE["Bench"];
   const imgUrl =
     active.league === "WNBA"
@@ -70,14 +79,14 @@ export default function PlayerDetail({ seasons, active, playoffsBySeason }: Prop
       style={{ "--tier-border": style.border, "--tier-glow": style.glow, "--tier-bg": style.bg } as React.CSSProperties}
     >
       <div className={styles.topNav}>
-        <Link href={`/players?season=${active.season}`} className={styles.back}>
+        <Link href={backHref} className={styles.back}>
           ← BACK
         </Link>
         <div className={styles.seasonTabs}>
           {seasons.map((s) => (
             <a
               key={s.season}
-              href={`/players/${active.player_id}?season=${s.season}`}
+              href={`/players/${active.player_id}?season=${s.season}${fromSuffix}`}
               className={`${styles.seasonTab} ${s.season === active.season && !showPlayoffs ? styles.activeTab : ""}`}
             >
               {s.season}
@@ -89,13 +98,13 @@ export default function PlayerDetail({ seasons, active, playoffsBySeason }: Prop
       {playoffData && (
         <div className={styles.seasonTabs}>
           <a
-            href={`/players/${active.player_id}?season=${active.season}`}
+            href={`/players/${active.player_id}?season=${active.season}${fromSuffix}`}
             className={`${styles.seasonTab} ${!showPlayoffs ? styles.activeTab : ""}`}
           >
             REGULAR SEASON
           </a>
           <a
-            href={`/players/${active.player_id}?season=${active.season}&view=playoffs`}
+            href={`/players/${active.player_id}?season=${active.season}&view=playoffs${fromSuffix}`}
             className={`${styles.seasonTab} ${showPlayoffs ? styles.activeTab : ""}`}
           >
             PLAYOFFS

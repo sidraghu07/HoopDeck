@@ -76,6 +76,21 @@ export default function PlayersExplorer({
     return `/players?${params.toString()}`;
   }
 
+  // Full current search state, carried through to the player detail page so
+  // its BACK link can restore this exact view instead of resetting filters.
+  function currentQuery(): string {
+    const params = new URLSearchParams();
+    params.set("league", league);
+    params.set("season", season);
+    if (name) params.set("name", name);
+    if (tier) params.set("tier", tier);
+    if (position) params.set("position", position);
+    if (sort !== "overall") params.set("sort", sort);
+    if (dir !== "desc") params.set("dir", dir);
+    if (page > 1) params.set("page", String(page));
+    return params.toString();
+  }
+
   return (
     <>
       <div className={styles.page}>
@@ -143,7 +158,7 @@ export default function PlayersExplorer({
                     player_name={g.player_name}
                     player_id={g.player_id}
                     league={g.league}
-                    onClick={() => { window.location.href = `/players/${g.player_id}`; }}
+                    onClick={() => { window.location.href = `/players/${g.player_id}?from=${encodeURIComponent(currentQuery())}`; }}
                     scale={isMobile ? 0.65 : undefined}
                   />
                 </div>
@@ -153,7 +168,7 @@ export default function PlayersExplorer({
                   <PlayerCard
                     mode="season"
                     data={p}
-                    onClick={() => { window.location.href = `/players/${p.player_id}?season=${p.season}`; }}
+                    onClick={() => { window.location.href = `/players/${p.player_id}?season=${p.season}&from=${encodeURIComponent(currentQuery())}`; }}
                     scale={isMobile ? 0.65 : undefined}
                   />
                 </div>
