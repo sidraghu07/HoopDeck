@@ -1,0 +1,5 @@
+{
+  "as_of": "2026-07-08",
+  "note": "See data/seed/roster_overrides_nba.json for the mechanism this feeds. Empty for now — no known WNBA transactions ahead of nba_api's own commonteamroster feed as of the as_of date above.",
+  "overrides": []
+}

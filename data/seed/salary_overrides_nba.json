@@ -1,0 +1,22 @@
+{
+  "as_of": "2026-07-08",
+  "note": "Same mechanism as data/seed/roster_overrides_nba.json: real contracts basketball-reference's own contracts pages haven't caught up to yet (brand-new free-agent signings won't appear on ANY team's bref page for weeks). Applied on top of the bref scrape in data/update_player_salaries.py by player_id. Remove an entry once bref's own data reflects it.",
+  "overrides": [
+    {
+      "player_id": 1629011,
+      "player_name": "Mitchell Robinson",
+      "team": "BOS",
+      "salary": 15796200,
+      "note": "Average annual value of a 3yr/$47.4M deal signed 2026-07-06 (exact year-1 breakdown not publicly available at research time) — used as a single-season estimate.",
+      "source_url": "https://www.espn.com/nba/story/_/id/49237335/sources-mitchell-robinson-celtics-agree-3-year-474m-deal"
+    },
+    {
+      "player_id": 201144,
+      "player_name": "Mike Conley",
+      "team": "BOS",
+      "salary": 3876529,
+      "note": "1yr veteran-minimum contract signed 2026-07-06.",
+      "source_url": "https://www.espn.com/nba/story/_/id/49236921/conley-celtics-becomes-12th-reach-20-nba-seasons"
+    }
+  ]
+}

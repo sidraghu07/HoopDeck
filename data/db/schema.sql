@@ -116,11 +116,6 @@ CREATE TABLE IF NOT EXISTS player_playoff_seasons (
     rating_playmaking   INTEGER NOT NULL,
     rating_defense      INTEGER NOT NULL,
     rating_impact       INTEGER NOT NULL,
-    -- Stateless, non-persisted cutoff label off the playoff rating percentile
-    -- (e.g. "Playoff Elite" / "Playoff Riser") — NOT the same concept as the
-    -- Franchise Player/All-Star tier system on player_seasons, which relies on
-    -- cross-season persistence logic that doesn't translate to small,
-    -- survivorship-biased playoff samples.
     playoff_badge        TEXT,
 
     pg_pts   REAL NOT NULL,
@@ -157,11 +152,37 @@ CREATE TABLE IF NOT EXISTS player_playoff_seasons (
 
     clutch_plus_minus  REAL,
 
+    hottest_zone       TEXT,
+    total_charted_fga  INTEGER NOT NULL DEFAULT 0,
+
     PRIMARY KEY (player_id, season)
 );
 
+ALTER TABLE player_playoff_seasons ADD COLUMN IF NOT EXISTS hottest_zone TEXT;
+ALTER TABLE player_playoff_seasons ADD COLUMN IF NOT EXISTS total_charted_fga INTEGER NOT NULL DEFAULT 0;
+
 CREATE INDEX IF NOT EXISTS idx_player_playoff_seasons_season    ON player_playoff_seasons (season);
 CREATE INDEX IF NOT EXISTS idx_player_playoff_seasons_player_id ON player_playoff_seasons (player_id);
+
+CREATE TABLE IF NOT EXISTS playoff_shot_zones (
+    player_id            INTEGER NOT NULL,
+    season                TEXT NOT NULL,
+    zone_slug             TEXT NOT NULL,
+    attempts              INTEGER NOT NULL,
+    makes                 INTEGER NOT NULL,
+    misses                INTEGER NOT NULL,
+    fg_pct                REAL,
+    freq_pct              REAL NOT NULL,
+    is_3pt                BOOLEAN NOT NULL,
+    volume_rating         INTEGER NOT NULL,
+    efficiency_rating     INTEGER NOT NULL,
+    hot_score             INTEGER NOT NULL,
+    is_hot_zone           BOOLEAN NOT NULL,
+    insufficient_sample   BOOLEAN NOT NULL,
+
+    PRIMARY KEY (player_id, season, zone_slug),
+    FOREIGN KEY (player_id, season) REFERENCES player_playoff_seasons (player_id, season) ON DELETE CASCADE
+);
 
 CREATE TABLE IF NOT EXISTS player_photos (
     player_id  INTEGER PRIMARY KEY,
@@ -187,10 +208,6 @@ CREATE TABLE IF NOT EXISTS team_seasons (
 
 CREATE INDEX IF NOT EXISTS idx_team_seasons_league_season ON team_seasons (league, season);
 
--- Tracks the OFFSEASON fingerprint check in data/update_current_season.py.
--- Lives in Postgres (not a local file) specifically so it persists across
--- ephemeral GitHub Actions runners — a fresh checkout each run means
--- anything written to disk is gone by the next scheduled run.
 CREATE TABLE IF NOT EXISTS season_state (
     league       TEXT PRIMARY KEY,
     season       TEXT NOT NULL,
@@ -198,3 +215,51 @@ CREATE TABLE IF NOT EXISTS season_state (
     fingerprint  INTEGER,
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS team_rosters (
+    player_id     INTEGER NOT NULL,
+    league        TEXT NOT NULL,
+    team          TEXT NOT NULL,
+    season        TEXT NOT NULL,
+    player_name   TEXT NOT NULL,
+    jersey_num    TEXT,
+    how_acquired  TEXT,
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    PRIMARY KEY (league, player_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_team_rosters_team_season ON team_rosters (league, team, season);
+
+CREATE TABLE IF NOT EXISTS draft_picks (
+    id                SERIAL PRIMARY KEY,
+    league            TEXT NOT NULL,
+    draft_year        INTEGER NOT NULL,
+    round             INTEGER NOT NULL,
+    original_team     TEXT NOT NULL,
+    current_owner     TEXT NOT NULL,
+    protection_note   TEXT,
+    trade_note        TEXT,
+    is_swap           BOOLEAN NOT NULL DEFAULT false,
+    source_url        TEXT,
+    updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    UNIQUE (league, draft_year, round, original_team, is_swap)
+);
+
+CREATE INDEX IF NOT EXISTS idx_draft_picks_owner ON draft_picks (league, current_owner);
+CREATE INDEX IF NOT EXISTS idx_draft_picks_year  ON draft_picks (league, draft_year);
+
+CREATE TABLE IF NOT EXISTS player_salaries (
+    player_id     INTEGER NOT NULL,
+    league        TEXT NOT NULL,
+    season        TEXT NOT NULL,
+    team          TEXT NOT NULL,
+    salary        BIGINT NOT NULL,
+    source        TEXT NOT NULL,
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    PRIMARY KEY (league, player_id, season)
+);
+
+CREATE INDEX IF NOT EXISTS idx_player_salaries_team ON player_salaries (league, team, season);

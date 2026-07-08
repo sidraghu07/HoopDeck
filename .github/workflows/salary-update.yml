@@ -1,0 +1,28 @@
+name: Salary refresh
+
+on:
+  schedule:
+    # Daily, offset from the 09:00 stats job — contract changes are rare
+    # events (signings), not fast-moving like trades/waives, so this doesn't
+    # need the roster job's 4-hour cadence.
+    - cron: "0 10 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  update-player-salaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Refresh NBA player salaries
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: uv run python data/update_player_salaries.py

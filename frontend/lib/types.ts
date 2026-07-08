@@ -28,8 +28,8 @@ export interface PlayerSeason {
   has_photo: boolean;
   availability: {
     games_played: number;
-    scheduled_games: number;
-    availability_pct: number;
+    scheduled_games: number | null;
+    availability_pct: number | null;
     roster_status: string | null;
   };
   ratings: {
@@ -68,10 +68,6 @@ export interface PlayerSeason {
   total_charted_fga: number;
 }
 
-// Playoff performance is tracked as a separate, reduced surface — no tier
-// (small, survivorship-biased samples don't support the persistence-based
-// tier system), no shot zones/ratings-by-position, no photo flag (reuses the
-// regular-season one).
 export interface PlayoffPlayerSeason {
   player_id: number;
   player_name: string;
@@ -113,6 +109,9 @@ export interface PlayoffPlayerSeason {
   };
   advanced: Record<string, number>;
   clutch: { clutch_plus_minus: number };
+  shot_zones: Record<string, ShotZone>;
+  hottest_zone: string | null;
+  total_charted_fga: number;
 }
 
 export interface PlayersResponse {
@@ -238,4 +237,91 @@ export interface TeamListItem {
   team: string;
   team_name: string;
   league: League;
+}
+
+export interface TeamRosterEntry {
+  player_id: number;
+  player_name: string;
+  team: string;
+  jersey_num: string | null;
+  how_acquired: string | null;
+  roster_season: string;
+  season: string | null;
+  primary_position: string | null;
+  tier: Tier | null;
+  rating_overall: number | null;
+  is_fallback_season: boolean;
+}
+
+export interface DraftPick {
+  id: number;
+  draft_year: number;
+  round: number;
+  original_team: string;
+  current_owner: string;
+  protection_note: string | null;
+  trade_note: string | null;
+  is_swap: boolean;
+  source_url: string | null;
+}
+
+export interface TradeProposal {
+  league: League;
+  team_a: string;
+  team_b: string;
+  players_from_a: number[];
+  players_from_b: number[];
+  picks_from_a?: number[];
+  picks_from_b?: number[];
+  season?: string;
+}
+
+export interface TradeSideEntry {
+  player_id: number;
+  player_name: string;
+  season: string;
+  team: string;
+  primary_position: string;
+  tier: Tier;
+  rating_overall: number;
+  assumed_minutes: number;
+}
+
+export interface TradeSideResult {
+  predicted_net_rating: number;
+  predicted_win_pct: number;
+  predicted_record: string;
+  roster_features: LineupRosterFeatures;
+  roster: TradeSideEntry[];
+}
+
+export interface TradeFairness {
+  avg_sent: number;
+  avg_received: number;
+  diff: number;
+  verdict: "favorable" | "fair" | "unfavorable";
+}
+
+export interface TradeLegality {
+  tier: "below_cap" | "under_first_apron" | "under_second_apron" | "over_second_apron" | "unknown";
+  legal: boolean | null;
+  outgoing: number | null;
+  incoming: number | null;
+  limit: number | null;
+  reason: string;
+  fairness: TradeFairness;
+}
+
+export interface TradeVerdict {
+  cba_legal: boolean | null;
+  team_a: TradeLegality;
+  team_b: TradeLegality;
+}
+
+export interface TradeResult {
+  league: League;
+  verdict: TradeVerdict;
+  team_a: { team: string; before: TradeSideResult; after: TradeSideResult };
+  team_b: { team: string; before: TradeSideResult; after: TradeSideResult };
+  picks_exchanged: { from_a: DraftPick[]; from_b: DraftPick[] };
 }

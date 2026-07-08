@@ -8,13 +8,19 @@ LEAGUE = os.environ.get("LEAGUE", "NBA")
 if LEAGUE not in ("NBA", "WNBA"):
     raise ValueError(f"Unsupported LEAGUE={LEAGUE!r}, expected 'NBA' or 'WNBA'")
 
-PLAYER_CSV = f"data/csv/{'nba' if LEAGUE == 'NBA' else 'wnba'}_player_base_stats.csv"
+SEASON_TYPE = os.environ.get("SEASON_TYPE", "Regular Season")
+if SEASON_TYPE not in ("Regular Season", "Playoffs"):
+    raise ValueError(f"Unsupported SEASON_TYPE={SEASON_TYPE!r}, expected 'Regular Season' or 'Playoffs'")
+IS_PLAYOFFS = SEASON_TYPE == "Playoffs"
+
 PREFIX = "nba" if LEAGUE == "NBA" else "wnba"
+PLAYER_CSV = (
+    f"data/csv/{PREFIX}_player_playoff_stats.csv" if IS_PLAYOFFS
+    else f"data/csv/{PREFIX}_player_base_stats.csv"
+)
+OUT_PREFIX = f"{PREFIX}_playoff" if IS_PLAYOFFS else PREFIX
 LEAGUE_ID_KWARGS = {} if LEAGUE == "NBA" else {"league_id": LeagueID.wnba}
 
-# See generate_player_dataset.py for SEASONS_OVERRIDE semantics — here it
-# scopes which seasons' shots get re-pulled (PLAYER_CSV may already contain
-# full history merged in by generate_player_dataset.py by the time this runs).
 SEASONS_OVERRIDE = os.environ.get("SEASONS_OVERRIDE")
 
 final_df = pd.read_csv(PLAYER_CSV, dtype={"SEASON": str})
@@ -30,7 +36,7 @@ for row in final_df.itertuples(index=False):
             team_id=row.TEAM_ID,
             player_id=row.PLAYER_ID,
             season_nullable=row.SEASON,
-            season_type_all_star='Regular Season',
+            season_type_all_star=SEASON_TYPE,
             context_measure_simple='FGA',
             **LEAGUE_ID_KWARGS,
         )
@@ -56,7 +62,7 @@ if all_shot_data:
     _override_seasons = (
         [s.strip() for s in SEASONS_OVERRIDE.split(",") if s.strip()] if SEASONS_OVERRIDE else []
     )
-    shots_final = _merge_and_save(shots_final, f"data/csv/{PREFIX}_shot_charts.csv", _override_seasons)
+    shots_final = _merge_and_save(shots_final, f"data/csv/{OUT_PREFIX}_shot_charts.csv", _override_seasons)
     print(f"Saved shot chart data: {len(shots_final)} rows")
 
     shots_final['IS_MAKE'] = (shots_final['SHOT_MADE_FLAG'] == 1)
@@ -75,7 +81,7 @@ if all_shot_data:
     )
     summary['FG_PCT'] = (summary['MAKES'] / summary['FGA']).round(3)
 
-    summary.to_csv(f"data/csv/{PREFIX}_shot_makes_misses_summary.csv", index=False)
+    summary.to_csv(f"data/csv/{OUT_PREFIX}_shot_makes_misses_summary.csv", index=False)
     print(f"Saved makes/misses summary: {len(summary)} rows")
 
     zone_summary = (
@@ -95,6 +101,6 @@ if all_shot_data:
         ['SEASON', 'PLAYER_ID', 'FGA'], ascending=[True, True, False]
     ).reset_index(drop=True)
 
-    zone_summary.to_csv(f"data/csv/{PREFIX}_shot_zone_summary.csv", index=False)
+    zone_summary.to_csv(f"data/csv/{OUT_PREFIX}_shot_zone_summary.csv", index=False)
     print(f"Saved zone breakdown: {len(zone_summary)} rows "
           f"({zone_summary[['SHOT_ZONE_BASIC','SHOT_ZONE_AREA','SHOT_ZONE_RANGE']].drop_duplicates().shape[0]} unique zone combos)")

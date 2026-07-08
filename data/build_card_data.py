@@ -23,6 +23,10 @@ SHOTS_ZONES_CSVS = {
     "NBA":  "data/csv/nba_shot_zone_summary.csv",
     "WNBA": "data/csv/wnba_shot_zone_summary.csv",
 }
+PLAYOFF_SHOTS_ZONES_CSVS = {
+    "NBA":  "data/csv/nba_playoff_shot_zone_summary.csv",
+    "WNBA": "data/csv/wnba_playoff_shot_zone_summary.csv",
+}
 OUT_JSON        = "data/output/players.json"
 FITTED_WEIGHTS_JSONS = {
     "NBA":  "data/output/fitted_weights_nba.json",
@@ -97,12 +101,12 @@ for (season, zone), grp in zones_basic.groupby(["SEASON", "SHOT_ZONE_BASIC"]):
         "fg_pct": qualified["FG_PCT"],
     }
 
-def build_zone_profile(pid, season, grp_df) -> dict:
+def build_zone_profile(pid, season, grp_df, pools) -> dict:
     profile = {}
     for _, row in grp_df.iterrows():
         zone = row["SHOT_ZONE_BASIC"]
         slug = zone_slug(zone)
-        pool = zone_pools.get((season, zone))
+        pool = pools.get((season, zone))
 
         insufficient_sample = pool is None or row["FGA"] < MIN_ZONE_ATTEMPTS
         if not insufficient_sample:
@@ -164,12 +168,8 @@ _MIN_MPG_TIER          = 10.0
 _STARTER_FLOOR_MPG     = 28.0
 _ROTATION_FLOOR_MPG    = 15.0
 
-# "Played about half the season" games-count floor — an absolute number, so it
-# has to scale with each league's season length (NBA 82 games vs WNBA ~40).
 FLOOR_MIN_GP_BY_LEAGUE = {"NBA": 41, "WNBA": 20}
 
-# Position groups behind the tiering impact bonuses below. NBA uses its 5-way
-# taxonomy; WNBA basketball-reference only distinguishes G/F/C.
 SCORING_ALPHA_POSITIONS = {"NBA": ["PG", "SG", "SF"], "WNBA": ["G"]}
 RIM_ANCHOR_POSITIONS    = {"NBA": ["C"], "WNBA": ["C"]}
 
@@ -180,11 +180,6 @@ def _zscore(s: pd.Series) -> pd.Series:
     return (s - s.mean()) / std
 
 def _recompute_tiers(df: pd.DataFrame) -> pd.DataFrame:
-    # Cross-season "did this player's tier persist" state below must never mix
-    # leagues — WNBA and NBA season strings sort interleaved (e.g. "2024" sorts
-    # right before "2024-25"), so a combined multi-league frame would leak one
-    # league's persisted Franchise Player/All-Star status into the other's very
-    # next iteration. Self-defend by splitting and recursing per league.
     if "LEAGUE" in df.columns and df["LEAGUE"].nunique() > 1:
         return pd.concat(
             [_recompute_tiers(g) for _, g in df.groupby("LEAGUE")],
@@ -509,7 +504,7 @@ for _, row in stats_f.iterrows():
 
     grp = zone_groups.get((pid, season))
     if grp is not None:
-        zone_prof      = build_zone_profile(pid, season, grp)
+        zone_prof      = build_zone_profile(pid, season, grp, zone_pools)
         total_zone_fga = int(grp["FGA"].sum())
     else:
         zone_prof = {zone_slug(z): {
@@ -686,6 +681,7 @@ load_to_postgres(cards, DATABASE_URL)
 
 print("\nBuilding playoff cards…")
 playoff_frames = []
+playoff_zones_frames = []
 for league, path in PLAYOFF_STATS_CSVS.items():
     if not os.path.exists(path):
         print(f"  [skip] {path} not found — no {league} playoff data yet")
@@ -693,6 +689,38 @@ for league, path in PLAYOFF_STATS_CSVS.items():
     pdf = pd.read_csv(path, dtype={"SEASON": str})
     pdf["LEAGUE"] = league
     playoff_frames.append(pdf)
+    zpath = PLAYOFF_SHOTS_ZONES_CSVS[league]
+    if os.path.exists(zpath):
+        zdf = pd.read_csv(zpath, dtype={"SEASON": str})
+        zdf["LEAGUE"] = league
+        playoff_zones_frames.append(zdf)
+
+playoff_zones = pd.concat(playoff_zones_frames, ignore_index=True) if playoff_zones_frames else pd.DataFrame()
+print(f"  Playoff zones: {playoff_zones.shape[0]:,} rows")
+
+playoff_zones_basic = pd.DataFrame()
+playoff_zone_pools: dict = {}
+playoff_zone_groups: dict = {}
+if not playoff_zones.empty:
+    playoff_zones_basic = (
+        playoff_zones[playoff_zones["SHOT_ZONE_BASIC"].isin(ZONES)]
+        .groupby(["PLAYER_ID", "SEASON", "SHOT_ZONE_BASIC"], as_index=False)
+        .agg(MAKES=("MAKES", "sum"), MISSES=("MISSES", "sum"), FGA=("FGA", "sum"))
+    )
+    playoff_zones_basic["FG_PCT"] = (playoff_zones_basic["MAKES"] / playoff_zones_basic["FGA"]).round(4)
+
+    playoff_total_fga = (
+        playoff_zones_basic.groupby(["PLAYER_ID", "SEASON"])["FGA"].sum()
+        .reset_index(name="total_zone_fga")
+    )
+    playoff_zones_basic = playoff_zones_basic.merge(playoff_total_fga, on=["PLAYER_ID", "SEASON"])
+    playoff_zones_basic["freq_pct"] = (playoff_zones_basic["FGA"] / playoff_zones_basic["total_zone_fga"]).round(4)
+
+    for (season, zone), grp in playoff_zones_basic.groupby(["SEASON", "SHOT_ZONE_BASIC"]):
+        qualified = grp[grp["FGA"] >= MIN_ZONE_ATTEMPTS]
+        playoff_zone_pools[(season, zone)] = {"fga": qualified["FGA"], "fg_pct": qualified["FG_PCT"]}
+
+    playoff_zone_groups = {key: grp for key, grp in playoff_zones_basic.groupby(["PLAYER_ID", "SEASON"])}
 
 playoff_cards = []
 if playoff_frames:
@@ -703,14 +731,8 @@ if playoff_frames:
     playoff_stats_f = playoff_stats[playoff_stats["GP"] >= PLAYOFF_MIN_GP].copy()
     print(f"  Playoff rows after GP filter: {len(playoff_stats_f):,} (from {len(playoff_stats):,})")
 
-    # Fully separate from the regular-season pools above — a playoff run's
-    # per-game stats (small, survivorship-biased samples) must never be
-    # percentile-ranked against the regular-season population or vice versa.
     playoff_pools = {s: build_pool(g) for s, g in playoff_stats_f.groupby("SEASON")}
 
-    # Stateless cutoff label, recomputed fresh every run — no cross-season
-    # persistence, unlike the Franchise Player/All-Star tier system (which
-    # doesn't translate to ~4-28 game playoff samples; see generate_player_dataset.py).
     def playoff_badge_for(overall: int) -> str | None:
         if overall >= 90:
             return "Playoff Elite"
@@ -724,6 +746,19 @@ if playoff_frames:
         league = row["LEAGUE"]
 
         rating = ratings_from_row(row, playoff_pools[season], row["POSITION_LIST"], league)
+
+        grp = playoff_zone_groups.get((pid, season))
+        if grp is not None:
+            zone_prof      = build_zone_profile(pid, season, grp, playoff_zone_pools)
+            total_zone_fga = int(grp["FGA"].sum())
+        else:
+            zone_prof = {zone_slug(z): {
+                "attempts": 0, "makes": 0, "misses": 0, "fg_pct": None, "freq_pct": 0.0,
+                "is_3pt": z in THREE_ZONES, "volume_rating": 40, "efficiency_rating": 40,
+                "hot_score": 40, "is_hot_zone": False, "insufficient_sample": True,
+            } for z in ZONES}
+            total_zone_fga = 0
+        hottest_zone = max(zone_prof.items(), key=lambda kv: kv[1]["hot_score"])[0] if zone_prof else None
 
         playoff_cards.append({
             "player_id":   pid,
@@ -782,6 +817,10 @@ if playoff_frames:
             "clutch": {
                 "clutch_plus_minus": safe(row.get("CLUTCH_PLUS_MINUS")),
             },
+
+            "shot_zones":        zone_prof,
+            "hottest_zone":      hottest_zone,
+            "total_charted_fga": total_zone_fga,
         })
 
     print(f"✓ {len(playoff_cards):,} playoff cards")

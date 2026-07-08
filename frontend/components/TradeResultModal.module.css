@@ -1,0 +1,300 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(8, 4, 16, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal {
+  width: min(860px, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--bg-surface);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 30px rgba(232, 179, 57, 0.35);
+  padding: 20px;
+}
+
+@media (max-width: 480px) {
+  .backdrop {
+    padding: 10px;
+  }
+
+  .modal {
+    padding: 14px;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: "Press Start 2P", monospace;
+  font-size: 12px;
+  color: var(--accent);
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.closeBtn:hover {
+  color: var(--text-primary);
+}
+
+.note {
+  font-family: "VT323", monospace;
+  color: var(--text-muted);
+  font-size: 15px;
+  margin-bottom: 16px;
+}
+
+.verdictBanner {
+  border: 2px solid var(--border-muted);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.bannerLegal {
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.bannerIllegal {
+  border-color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.bannerNeutral {
+  border-color: var(--border-muted);
+  background: var(--bg-void);
+}
+
+.verdictHeadline {
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.verdictReasons {
+  font-family: "VT323", monospace;
+  font-size: 15px;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.verdictReasons strong {
+  color: var(--text-primary);
+}
+
+.fairnessBadge {
+  font-family: "VT323", monospace;
+  font-size: 14px;
+  padding: 3px 8px;
+  border: 1px solid var(--border-muted);
+  letter-spacing: 0.5px;
+}
+
+.fairnessGood {
+  color: #4ade80;
+  border-color: #4ade80;
+}
+
+.fairnessBad {
+  color: #dc2626;
+  border-color: #dc2626;
+}
+
+.fairnessNeutral {
+  color: var(--text-muted);
+}
+
+.sidesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 700px) {
+  .sidesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sideCard {
+  border: 2px solid var(--border-muted);
+  padding: 14px;
+}
+
+.sideHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sideTeam {
+  font-family: "Press Start 2P", monospace;
+  font-size: 12px;
+  color: var(--text-primary);
+  letter-spacing: 1px;
+}
+
+.sideRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.sideCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.sideLabel {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+.sideRecord {
+  font-family: "Press Start 2P", monospace;
+  font-size: 20px;
+  color: var(--accent);
+}
+
+.sideSub {
+  font-family: "VT323", monospace;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.arrow {
+  color: var(--text-muted);
+  font-size: 20px;
+}
+
+.deltaLine {
+  text-align: center;
+  font-family: "VT323", monospace;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  margin-bottom: 14px;
+}
+
+.deltaUp {
+  color: #4ade80;
+}
+
+.deltaDown {
+  color: #dc2626;
+}
+
+.deltaFlat {
+  color: var(--text-muted);
+}
+
+.sectionLabel {
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.rosterTable {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rosterRow {
+  display: grid;
+  grid-template-columns: 36px 1fr 44px 36px;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-void);
+  border: 1px solid var(--border-muted);
+  padding: 6px 10px;
+  font-family: "VT323", monospace;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.rosterPos {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  color: var(--accent);
+}
+
+.rosterName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rosterTeam {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.rosterOvr {
+  color: var(--accent);
+  text-align: right;
+}
+
+.picksGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 700px) {
+  .picksGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.picksTeamLabel {
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.picksNone {
+  font-family: "VT323", monospace;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.pickRow {
+  font-family: "VT323", monospace;
+  color: var(--text-primary);
+  font-size: 14px;
+  border: 1px solid var(--border-muted);
+  background: var(--bg-void);
+  padding: 6px 8px;
+  margin-bottom: 4px;
+}

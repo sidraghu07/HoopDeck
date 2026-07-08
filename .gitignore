@@ -14,7 +14,6 @@ next-env.d.ts
 
 data/csv/
 data/output/*
-
 !data/output/lineup_model_nba.json
 !data/output/lineup_model_wnba.json
 

@@ -1,3 +1,5 @@
+import unicodedata
+
 import pandas as pd
 import numpy as np
 
@@ -5,11 +7,19 @@ MIN_GP = 10
 MIN_GP_BY_LEAGUE = {"NBA": 10, "WNBA": 5}
 MIN_MPG = 5.0
 
-# Playoff eligibility is far looser than the regular-season gates above — a
-# single playoff game is legitimately "all the data that exists" for that
-# player, and percentile ranking already handles small samples without an
-# MPG floor.
 PLAYOFF_MIN_GP = 1
+
+
+def normalize_name(name: str) -> str:
+    name = str(name).strip()
+    name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
+    name = name.lower()
+    name = name.replace(".", "").replace(",", "").replace("'", "")
+    for suffix in [" jr", " sr", " iii", " ii", " iv"]:
+        if name.endswith(suffix):
+            name = name[: -len(suffix)]
+            break
+    return " ".join(name.split())
 
 
 def parse_positions(pos_str):

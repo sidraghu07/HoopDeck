@@ -1,0 +1,197 @@
+.wrap {
+  padding: 24px;
+  min-height: calc(100vh - 40px);
+  background: var(--bg-void);
+  background-image: radial-gradient(circle at 20% 0%, var(--bg-surface-alt) 0%, var(--bg-void) 60%);
+}
+
+@media (max-width: 800px) {
+  .wrap {
+    padding: 16px;
+  }
+}
+
+.topBar {
+  margin-bottom: 16px;
+}
+
+.leagueToggle {
+  display: flex;
+  gap: 8px;
+  max-width: 300px;
+}
+
+.leagueBtn {
+  flex: 1;
+  background: var(--bg-void);
+  border: 2px solid var(--border-muted);
+  color: var(--text-muted);
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px;
+  padding: 8px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+
+.leagueBtn:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.leagueBtnActive {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 10px rgba(232, 179, 57, 0.25);
+}
+
+.sidesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 800px) {
+  .sidesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sidePanel {
+  background: var(--bg-surface);
+  border: 2px solid var(--border-muted);
+  padding: 16px;
+}
+
+.sideLabel {
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  color: var(--text-primary);
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.select {
+  width: 100%;
+  background: var(--bg-void);
+  border: 2px solid var(--border-muted);
+  color: var(--text-primary);
+  font-family: "VT323", monospace;
+  font-size: 18px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+
+.hint {
+  font-family: "VT323", monospace;
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.sectionLabel {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  margin: 12px 0 8px;
+}
+
+.rosterList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.rosterItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-void);
+  border: 1px solid var(--border-muted);
+  color: var(--text-primary);
+  font-family: "VT323", monospace;
+  font-size: 15px;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.rosterItem:hover {
+  border-color: var(--border-strong);
+}
+
+.rosterItemOut {
+  border-color: #dc2626;
+  background: rgba(220, 38, 38, 0.12);
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.rosterItemName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rosterItemMeta {
+  flex-shrink: 0;
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.rosterItemOut .rosterItemMeta {
+  color: var(--text-muted);
+}
+
+.simulateBtn {
+  width: 100%;
+  font-family: "Press Start 2P", monospace;
+  font-size: 13px;
+  color: var(--bg-void);
+  background: var(--accent);
+  border: none;
+  padding: 14px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--accent-dim);
+  transition: transform 80ms steps(2), box-shadow 80ms steps(2);
+}
+
+.simulateBtn:hover:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--accent-dim);
+}
+
+.simulateBtn:disabled {
+  background: var(--border-muted);
+  color: var(--text-muted);
+  box-shadow: none;
+  cursor: default;
+}
+
+.error {
+  margin-top: 12px;
+  font-family: "VT323", monospace;
+  color: #dc2626;
+  font-size: 15px;
+}
+
+.viewResultBtn {
+  width: 100%;
+  margin-top: 12px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--bg-void);
+  border: 2px solid var(--accent);
+  padding: 12px;
+  cursor: pointer;
+  transition: background 80ms;
+}
+
+.viewResultBtn:hover {
+  background: var(--bg-surface-alt);
+}

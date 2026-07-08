@@ -317,7 +317,24 @@ def get_player_playoffs(player_id: int, season: str | None = None):
             )
             rows = cur.fetchall()
 
+            cur.execute(
+                "SELECT * FROM playoff_shot_zones WHERE player_id = %(player_id)s",
+                {"player_id": player_id},
+            )
+            zone_rows = cur.fetchall()
+
+    zones_by_season: dict = {}
+    for z in zone_rows:
+        zones_by_season.setdefault(z["season"], {})[z["zone_slug"]] = {
+            "attempts": z["attempts"], "makes": z["makes"], "misses": z["misses"],
+            "fg_pct": z["fg_pct"], "freq_pct": z["freq_pct"], "is_3pt": z["is_3pt"],
+            "volume_rating": z["volume_rating"], "efficiency_rating": z["efficiency_rating"],
+            "hot_score": z["hot_score"], "is_hot_zone": z["is_hot_zone"],
+            "insufficient_sample": z["insufficient_sample"],
+        }
+
     def _full_playoff_season(r: dict) -> dict:
+        zones = zones_by_season.get(r["season"], {})
         return {
             "player_id": r["player_id"],
             "player_name": r["player_name"],
@@ -352,6 +369,9 @@ def get_player_playoffs(player_id: int, season: str | None = None):
                 "pace": r["pace"], "plus_minus": r["plus_minus"], "e_tov_pct": r["e_tov_pct"],
             },
             "clutch": {"clutch_plus_minus": r["clutch_plus_minus"]},
+            "shot_zones": zones,
+            "hottest_zone": r["hottest_zone"],
+            "total_charted_fga": r["total_charted_fga"],
         }
 
     return [_full_playoff_season(r) for r in rows]

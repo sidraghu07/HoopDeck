@@ -17,11 +17,6 @@ interface Props {
   playoffsBySeason: Record<string, PlayoffPlayerSeason>;
 }
 
-// Playoffs data is a reduced surface (no shot zones/availability/tier) — this
-// adapts it into the same PlayerSeason shape so the header/ribbon/panels
-// below can render it with zero special-casing. The SHOT ZONES panel already
-// degrades gracefully on an empty zones map; the AVAILABILITY panel already
-// falls back to "—" on nulls.
 function toDisplaySeason(regular: PlayerSeason, playoff: PlayoffPlayerSeason): PlayerSeason {
   return {
     ...regular,
@@ -35,12 +30,12 @@ function toDisplaySeason(regular: PlayerSeason, playoff: PlayoffPlayerSeason): P
     advanced: playoff.advanced,
     clutch: playoff.clutch,
     ratings_by_position: {},
-    shot_zones: {},
-    hottest_zone: "",
+    shot_zones: playoff.shot_zones,
+    hottest_zone: playoff.hottest_zone ?? "",
     availability: {
       games_played: playoff.games_played,
-      scheduled_games: regular.availability.scheduled_games,
-      availability_pct: regular.availability.availability_pct,
+      scheduled_games: null,
+      availability_pct: null,
       roster_status: "Playoffs",
     },
   };
@@ -55,11 +50,6 @@ export default function PlayerDetail({ seasons, active, playoffsBySeason }: Prop
   const showPlayoffs = searchParams.get("view") === "playoffs" && !!playoffData;
   const displayed = showPlayoffs ? toDisplaySeason(active, playoffData) : active;
 
-  // The Players page's full search state (league/season/name/tier/position/
-  // sort/dir/page), carried here by whatever link sent us to this page, so
-  // BACK restores that exact view instead of resetting filters. Also carried
-  // through the season-tab/playoffs-toggle links below so it survives
-  // further navigation within this page.
   const fromQuery = searchParams.get("from");
   const backHref = fromQuery ? `/players?${fromQuery}` : `/players?season=${active.season}`;
   const fromSuffix = fromQuery ? `&from=${encodeURIComponent(fromQuery)}` : "";

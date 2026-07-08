@@ -1,6 +1,5 @@
 import os
 import time
-import unicodedata
 import numpy as np
 import requests
 import pandas as pd
@@ -10,14 +9,12 @@ from bs4 import BeautifulSoup
 from nba_api.stats.endpoints import leaguedashplayerstats, leaguedashplayerclutch
 from nba_api.stats.library.parameters import LeagueID
 
+from rating_lib import normalize_name
+
 LEAGUE = os.environ.get("LEAGUE", "NBA")
 if LEAGUE not in ("NBA", "WNBA"):
     raise ValueError(f"Unsupported LEAGUE={LEAGUE!r}, expected 'NBA' or 'WNBA'")
 
-# "Regular Season" (default) or "Playoffs". Playoffs data is a much smaller,
-# separate surface (see data/db/schema.sql's player_playoff_seasons) — it
-# gets its own output CSV and skips the tier system entirely (see the
-# add_player_tiers call near the bottom of this file).
 SEASON_TYPE = os.environ.get("SEASON_TYPE", "Regular Season")
 if SEASON_TYPE not in ("Regular Season", "Playoffs"):
     raise ValueError(f"Unsupported SEASON_TYPE={SEASON_TYPE!r}, expected 'Regular Season' or 'Playoffs'")
@@ -26,11 +23,6 @@ IS_PLAYOFFS = SEASON_TYPE == "Playoffs"
 _prefix = "nba" if LEAGUE == "NBA" else "wnba"
 OUT_CSV = f"data/csv/{_prefix}_player_playoff_stats.csv" if IS_PLAYOFFS else f"data/csv/{_prefix}_player_base_stats.csv"
 
-# When set (comma-separated season strings, e.g. "2025-26" or "2025,2024"),
-# only those seasons are re-fetched and the result is merged into the
-# existing OUT_CSV (replacing just those seasons' rows) instead of doing a
-# full-history pull. Used by data/update_current_season.py for daily
-# in-season refreshes — full-history behavior (this unset) is unchanged.
 SEASONS_OVERRIDE = os.environ.get("SEASONS_OVERRIDE")
 
 
@@ -49,11 +41,6 @@ if LEAGUE == "NBA":
 
     SEASON_TO_BREF_YEAR = {s: int(s[:4]) + 1 for s in seasons}
 else:
-    # WNBA season strings are bare years (bref year == season year, no +1 offset).
-    # Full historical per-season schedule lengths aren't hand-verified here — only
-    # the well-known 2020 "bubble" season is pinned; every other season falls back
-    # to max(GP) observed that season (see SCHEDULED_GAMES below), same fallback
-    # path the NBA pipeline already uses for any season missing from SEASON_GAMES.
     seasons = [str(y) for y in range(1997, 2026)]
 
     SEASON_GAMES = {"2020": 22}
@@ -62,12 +49,7 @@ else:
 if SEASONS_OVERRIDE:
     _override_seasons = [s.strip() for s in SEASONS_OVERRIDE.split(",") if s.strip()]
     seasons = [s for s in seasons if s in _override_seasons] or _override_seasons
-    # Recompute (not filter) the bref-year mapping for the override seasons —
-    # an override season from a future/newly-started year (e.g. a brand new
-    # WNBA calendar year) won't be a key in the historical dict above, and
-    # filtering it out silently emptied SEASON_TO_BREF_YEAR, which made the
-    # position scrape loop run zero iterations and fall back to "Unknown"
-    # for every player that season.
+   
     _bref_year = (lambda s: int(s[:4]) + 1) if LEAGUE == "NBA" else (lambda s: int(s))
     SEASON_TO_BREF_YEAR = {s: _bref_year(s) for s in seasons}
 
@@ -105,9 +87,6 @@ MANUAL_POSITION_OVERRIDES: dict[tuple, str] = {
 
 VALID_POSITIONS = {"PG", "SG", "SF", "PF", "C"} if LEAGUE == "NBA" else {"G", "F", "C"}
 
-# Position groups used by the tiering impact bonuses below. NBA uses its 5-way
-# taxonomy; WNBA basketball-reference only distinguishes G/F/C, so "scoring_alpha"
-# (non-big shot creators) maps to the single "G" bucket instead of PG/SG/SF.
 SCORING_ALPHA_POSITIONS = ["PG", "SG", "SF"] if LEAGUE == "NBA" else ["G"]
 RIM_ANCHOR_POSITIONS = ["C"]
 
@@ -122,18 +101,6 @@ MIN_AVAILABILITY_PCT         = 0.40
 MIN_AVAILABILITY_PCT_PROMOTE = 0.55
 ALL_STAR_PERSIST_PCTILE      = 0.60
 MIN_MPG                      = 10
-
-
-def normalize_name(name: str) -> str:
-    name = str(name).strip()
-    name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
-    name = name.lower()
-    name = name.replace(".", "").replace(",", "").replace("'", "")
-    for suffix in [" jr", " sr", " iii", " ii", " iv"]:
-        if name.endswith(suffix):
-            name = name[: -len(suffix)]
-            break
-    return " ".join(name.split())
 
 
 def zscore(s: pd.Series) -> pd.Series:
@@ -174,20 +141,6 @@ def scrape_bref_positions(year: int, season_str: str) -> pd.DataFrame:
 
 
 def scrape_bref_positions_wnba(year: int, season_str: str) -> pd.DataFrame:
-    """WNBA equivalent of scrape_bref_positions().
-
-    basketball-reference's WNBA per-game table has a duplicate data-stat="g"
-    header (both "Games" and a second "Games" column share the attribute),
-    which breaks pandas.read_html's column alignment. Parsing the tbody rows
-    directly via their data-stat attributes sidesteps that entirely.
-
-    The player-name cell's markup is also malformed (an unclosed <th><strong>
-    wrapping the name), which makes every subsequent <td> in the row parse as
-    a *descendant* of that cell rather than a sibling — so a naive
-    td.get_text() on the name cell picks up the entire row's stats
-    concatenated together. Reading the name from its nested <a> tag specifically
-    sidesteps that.
-    """
     url = f"https://www.basketball-reference.com/wnba/years/{year}_per_game.html"
 
     resp = requests.get(url, headers=HEADERS, timeout=20)
@@ -654,10 +607,6 @@ if SEASONS_OVERRIDE and os.path.exists(OUT_CSV):
     print(f"  Merged shape: {final_df.shape}")
 
 if IS_PLAYOFFS:
-    # Playoff samples (single digits to ~28 games) are too small and
-    # survivorship-biased for the tier system's cross-season persistence
-    # logic — build_card_data.py's playoff path rates players directly off
-    # percentiles instead, with no tier at all.
     print("\nSkipping tier assignment for playoffs data.")
 else:
     print("\nAssigning tiers (First Option / All-Star / Starter / Rotation / Bench)...")

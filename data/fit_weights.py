@@ -17,10 +17,6 @@ MIN_GP = MIN_GP_BY_LEAGUE[LEAGUE]
 STATS_CSV = f"data/csv/{'nba' if LEAGUE == 'NBA' else 'wnba'}_player_base_stats.csv"
 OUT_JSON = f"data/output/fitted_weights_{'nba' if LEAGUE == 'NBA' else 'wnba'}.json"
 
-# Ridge alpha: WNBA has roughly a third of NBA's sample size (fewer teams,
-# fewer seasons of clean data), so it gets heavier regularization by default
-# to avoid overfitting per-position idiosyncrasies. Revisit after inspecting
-# holdout R2 in this script's own printed output.
 ALPHA = 1.0 if LEAGUE == "NBA" else 3.0
 
 if LEAGUE == "NBA":

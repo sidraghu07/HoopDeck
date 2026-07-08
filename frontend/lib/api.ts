@@ -95,6 +95,53 @@ export async function getTeamList(league: string = "NBA") {
   return res.json();
 }
 
+export async function getCurrentTeams(league: string) {
+  const res = await fetch(`${apiBase()}/api/teams/${league}`, {
+    next: { revalidate: 300 },
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function getTeamRoster(league: string, team: string, season?: string) {
+  const params = season ? `?season=${season}` : "";
+  const res = await fetch(`${apiBase()}/api/teams/${league}/${team}/roster${params}`, {
+    next: { revalidate: 300 },
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function getTeamPicks(league: string, team: string) {
+  const res = await fetch(`${apiBase()}/api/teams/${league}/${team}/picks`, {
+    next: { revalidate: 300 },
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function simulateTrade(payload: {
+  league: string;
+  team_a: string;
+  team_b: string;
+  players_from_a: number[];
+  players_from_b: number[];
+  picks_from_a?: number[];
+  picks_from_b?: number[];
+  season?: string;
+}) {
+  const res = await fetch(`${apiBase()}/api/trades/simulate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail ?? `API ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function simulateLineup(
   league: string,
   players: { player_id: number; season: string; position?: string }[]

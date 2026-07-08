@@ -104,6 +104,10 @@ export default async function HomePage() {
             SIMULATE A LINEUP
           </Link>
 
+          <Link href="/trades" className={styles.secondaryBtn}>
+            SIMULATE A TRADE
+          </Link>
+
           <Link href="/charts" className={styles.secondaryBtn}>
             CREATE A CHART
           </Link>

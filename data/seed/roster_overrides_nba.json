@@ -1,0 +1,510 @@
+{
+  "as_of": "2026-07-08",
+  "note": "Real transactions confirmed via web research (ESPN's 2026 NBA offseason trade tracker, cross-checked against team beat reporting) that nba_api's own commonteamroster feed had not yet reflected as of the as_of date above (verified live: stats.nba.com still showed pre-trade rosters across nearly every veteran move this offseason, not just isolated cases). Applied on top of the fetched roster in data/update_team_rosters.py by player_id, overriding whatever team that fetch returned. Rookies/draft-day-only picks are excluded \u2014 they have no 'old team' to be stale from, since nba_api already places them correctly wherever they were drafted/acquired. Cash-only and pick-only trades are also excluded (no roster impact). Remove an entry once nba_api's live feed catches up on its own \u2014 leaving a stale entry here indefinitely would silently mask the source catching up to a *different* subsequent move for the same player.",
+  "overrides": [
+    {
+      "player_id": 1627759,
+      "player_name": "Jaylen Brown",
+      "team": "PHI",
+      "how_acquired": "Traded from BOS (Jaylen Brown / Paul George trade, 2026-07-01)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 202331,
+      "player_name": "Paul George",
+      "team": "BOS",
+      "how_acquired": "Traded from PHI (Jaylen Brown / Paul George trade, 2026-07-01)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1629011,
+      "player_name": "Mitchell Robinson",
+      "team": "BOS",
+      "how_acquired": "Free agent signing (3yr/$47.4M), 2026 offseason",
+      "source_url": "https://www.espn.com/nba/story/_/id/49237335/sources-mitchell-robinson-celtics-agree-3-year-474m-deal"
+    },
+    {
+      "player_id": 201144,
+      "player_name": "Mike Conley",
+      "team": "BOS",
+      "how_acquired": "Free agent signing (1yr, minimum), 2026 offseason",
+      "source_url": "https://www.espn.com/nba/story/_/id/49236921/conley-celtics-becomes-12th-reach-20-nba-seasons"
+    },
+    {
+      "player_id": 203507,
+      "player_name": "Giannis Antetokounmpo",
+      "team": "MIA",
+      "how_acquired": "Traded from MIL (Giannis Antetokounmpo trade, 2026-06-22)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1626171,
+      "player_name": "Bobby Portis",
+      "team": "MIA",
+      "how_acquired": "Traded from MIL (Giannis Antetokounmpo trade, 2026-06-22)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1629639,
+      "player_name": "Tyler Herro",
+      "team": "MIL",
+      "how_acquired": "Traded from MIA (Giannis Antetokounmpo trade, 2026-06-22)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1642276,
+      "player_name": "Kel'el Ware",
+      "team": "MIL",
+      "how_acquired": "Traded from MIA (Giannis Antetokounmpo trade, 2026-06-22)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1631170,
+      "player_name": "Jaime Jaquez Jr.",
+      "team": "MIL",
+      "how_acquired": "Traded from MIA (Giannis Antetokounmpo trade, 2026-06-22)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1642857,
+      "player_name": "Kasparas Jakucionis",
+      "team": "MIL",
+      "how_acquired": "Traded from MIA (Giannis Antetokounmpo trade, 2026-06-22)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 202695,
+      "player_name": "Kawhi Leonard",
+      "team": "TOR",
+      "how_acquired": "Traded from LAC (Kawhi Leonard trade, 2026-06-30)",
+      "source_url": "https://www.espn.com/nba/story/_/id/49208596/kawhi-leonard-trade-grades-reaction-clippers-raptors-contract"
+    },
+    {
+      "player_id": 1627742,
+      "player_name": "Brandon Ingram",
+      "team": "LAC",
+      "how_acquired": "Traded from TOR (Kawhi Leonard trade, 2026-06-30)",
+      "source_url": "https://www.espn.com/nba/story/_/id/49208596/kawhi-leonard-trade-grades-reaction-clippers-raptors-contract"
+    },
+    {
+      "player_id": 1641711,
+      "player_name": "Gradey Dick",
+      "team": "LAC",
+      "how_acquired": "Traded from TOR (Kawhi Leonard trade, 2026-06-30)",
+      "source_url": "https://www.espn.com/nba/story/_/id/49208596/kawhi-leonard-trade-grades-reaction-clippers-raptors-contract"
+    },
+    {
+      "player_id": 1629630,
+      "player_name": "Ja Morant",
+      "team": "POR",
+      "how_acquired": "Traded from MEM (Ja Morant trade, 2026-06-29)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 203924,
+      "player_name": "Jerami Grant",
+      "team": "MEM",
+      "how_acquired": "Traded from POR (Ja Morant trade, 2026-06-29)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1631200,
+      "player_name": "Kris Murray",
+      "team": "MEM",
+      "how_acquired": "Traded from POR (Ja Morant trade, 2026-06-29)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1630163,
+      "player_name": "LaMelo Ball",
+      "team": "MIN",
+      "how_acquired": "Traded from CHA (LaMelo Ball trade, 2026-06-25)",
+      "source_url": "https://www.nba.com/news/lamelo-ball-trade-timberwolves-2026"
+    },
+    {
+      "player_id": 1630182,
+      "player_name": "Josh Green",
+      "team": "MIN",
+      "how_acquired": "Traded from CHA (LaMelo Ball trade, 2026-06-25)",
+      "source_url": "https://www.nba.com/news/lamelo-ball-trade-timberwolves-2026"
+    },
+    {
+      "player_id": 1629675,
+      "player_name": "Naz Reid",
+      "team": "CHA",
+      "how_acquired": "Traded from MIN (LaMelo Ball trade, 2026-06-25)",
+      "source_url": "https://www.nba.com/news/lamelo-ball-trade-timberwolves-2026"
+    },
+    {
+      "player_id": 1628970,
+      "player_name": "Miles Bridges",
+      "team": "PHX",
+      "how_acquired": "Traded from CHA (Miles Bridges trade, 2026-06-28)",
+      "source_url": "https://sports.yahoo.com/nba/article/hornets-reportedly-trading-miles-bridges-to-suns-for-grayson-allen-royce-oneale-1st-round-pick-180039166.html"
+    },
+    {
+      "player_id": 1628960,
+      "player_name": "Grayson Allen",
+      "team": "CHA",
+      "how_acquired": "Traded from PHX (Miles Bridges trade, 2026-06-28)",
+      "source_url": "https://sports.yahoo.com/nba/article/hornets-reportedly-trading-miles-bridges-to-suns-for-grayson-allen-royce-oneale-1st-round-pick-180039166.html"
+    },
+    {
+      "player_id": 1626220,
+      "player_name": "Royce O'Neale",
+      "team": "CHA",
+      "how_acquired": "Traded from PHX (Miles Bridges trade, 2026-06-28)",
+      "source_url": "https://sports.yahoo.com/nba/article/hornets-reportedly-trading-miles-bridges-to-suns-for-grayson-allen-royce-oneale-1st-round-pick-180039166.html"
+    },
+    {
+      "player_id": 1631117,
+      "player_name": "Walker Kessler",
+      "team": "LAL",
+      "how_acquired": "Sign-and-trade from UTA (Walker Kessler trade, 2026-07-01)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1629028,
+      "player_name": "Deandre Ayton",
+      "team": "WAS",
+      "how_acquired": "Traded from LAL (Lakers-Wizards trade, 2026-07-03)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1630702,
+      "player_name": "Jaden Hardy",
+      "team": "LAL",
+      "how_acquired": "Traded from WAS (Lakers-Wizards trade, 2026-07-03)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1627827,
+      "player_name": "Dorian Finney-Smith",
+      "team": "CHA",
+      "how_acquired": "Traded from HOU (Rockets-Hornets trade, 2026-07-03)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1630583,
+      "player_name": "Santi Aldama",
+      "team": "DAL",
+      "how_acquired": "Traded from MEM (Grizzlies-Mavericks trade, 2026-07-01)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1642358,
+      "player_name": "AJ Johnson",
+      "team": "MEM",
+      "how_acquired": "Traded from DAL (Grizzlies-Mavericks trade, 2026-07-01)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1642269,
+      "player_name": "Devin Carter",
+      "team": "ATL",
+      "how_acquired": "Traded from SAC (Kings-Hawks trade, 2026-06-29)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1630191,
+      "player_name": "Isaiah Stewart",
+      "team": "MEM",
+      "how_acquired": "Traded from DET (Pistons-Grizzlies trade, 2026-06-24)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1630198,
+      "player_name": "Isaiah Joe",
+      "team": "DET",
+      "how_acquired": "Traded from OKC (Thunder-Pistons trade, 2026-06-26)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1627752,
+      "player_name": "Taurean Prince",
+      "team": "DET",
+      "how_acquired": "Traded from MIL (Pistons-Bucks trade, 2026-07-07)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 203914,
+      "player_name": "Gary Harris",
+      "team": "DET",
+      "how_acquired": "Traded from MIL (Pistons-Bucks trade, 2026-07-07)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1627747,
+      "player_name": "Caris LeVert",
+      "team": "MIL",
+      "how_acquired": "Traded from DET (Pistons-Bucks trade, 2026-07-07)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 203944,
+      "player_name": "Julius Randle",
+      "team": "BKN",
+      "how_acquired": "Traded from MIN (3-team trade w/ CHI, 2026-06-22)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1629651,
+      "player_name": "Nic Claxton",
+      "team": "CHI",
+      "how_acquired": "Traded from BKN (3-team trade w/ MIN, 2026-06-22)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 1631338,
+      "player_name": "Mouhamadou Gueye",
+      "team": "WAS",
+      "how_acquired": "Waived by MIN after Julius Randle/Nic Claxton trade, signed by WAS (Exhibit 10)",
+      "source_url": "https://www.cbssports.com/fantasy/basketball/news/mouhamadou-gueye-sent-to-minnesota-will-be-waived/"
+    },
+    {
+      "player_id": 1630598,
+      "player_name": "Aaron Wiggins",
+      "team": "ATL",
+      "how_acquired": "Traded from OKC (Thunder-Hawks trade, 2026-06-21)",
+      "source_url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency"
+    },
+    {
+      "player_id": 202696,
+      "player_name": "Nikola Vu\u010devi\u0107",
+      "team": "ORL",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/orl/roster"
+    },
+    {
+      "player_id": 1631165,
+      "player_name": "Keon Ellis",
+      "team": "BKN",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/bkn/roster"
+    },
+    {
+      "player_id": 1626204,
+      "player_name": "Larry Nance Jr.",
+      "team": "IND",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/ind/roster"
+    },
+    {
+      "player_id": 1629731,
+      "player_name": "Dean Wade",
+      "team": "PHI",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/phi/roster"
+    },
+    {
+      "player_id": 1641725,
+      "player_name": "Trey Alexander",
+      "team": "UTA",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/uta/roster"
+    },
+    {
+      "player_id": 1626172,
+      "player_name": "Kevon Looney",
+      "team": "LAL",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/lal/roster"
+    },
+    {
+      "player_id": 1629012,
+      "player_name": "Collin Sexton",
+      "team": "LAL",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/lal/roster"
+    },
+    {
+      "player_id": 1629014,
+      "player_name": "Anfernee Simons",
+      "team": "PHI",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/phi/roster"
+    },
+    {
+      "player_id": 203114,
+      "player_name": "Khris Middleton",
+      "team": "WAS",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/was/roster"
+    },
+    {
+      "player_id": 1628963,
+      "player_name": "Marvin Bagley III",
+      "team": "DEN",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/den/roster"
+    },
+    {
+      "player_id": 203501,
+      "player_name": "Tim Hardaway Jr.",
+      "team": "MIA",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/mia/roster"
+    },
+    {
+      "player_id": 1630311,
+      "player_name": "Pat Spencer",
+      "team": "PHX",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/phx/roster"
+    },
+    {
+      "player_id": 1629006,
+      "player_name": "Josh Okogie",
+      "team": "UTA",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/uta/roster"
+    },
+    {
+      "player_id": 203992,
+      "player_name": "Bogdan Bogdanovic",
+      "team": "HOU",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/hou/roster"
+    },
+    {
+      "player_id": 1628381,
+      "player_name": "John Collins",
+      "team": "DET",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/det/roster"
+    },
+    {
+      "player_id": 1628379,
+      "player_name": "Luke Kennard",
+      "team": "PHX",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/phx/roster"
+    },
+    {
+      "player_id": 1629637,
+      "player_name": "Jaxson Hayes",
+      "team": "UTA",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/uta/roster"
+    },
+    {
+      "player_id": 1629060,
+      "player_name": "Rui Hachimura",
+      "team": "LAC",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/lac/roster"
+    },
+    {
+      "player_id": 203935,
+      "player_name": "Marcus Smart",
+      "team": "HOU",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/hou/roster"
+    },
+    {
+      "player_id": 1626181,
+      "player_name": "Norman Powell",
+      "team": "CHI",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/chi/roster"
+    },
+    {
+      "player_id": 203937,
+      "player_name": "Kyle Anderson",
+      "team": "TOR",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/tor/roster"
+    },
+    {
+      "player_id": 1630574,
+      "player_name": "Ariel Hukporti",
+      "team": "PHI",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/phi/roster"
+    },
+    {
+      "player_id": 1629021,
+      "player_name": "Moritz Wagner",
+      "team": "BKN",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/bkn/roster"
+    },
+    {
+      "player_id": 1642880,
+      "player_name": "Kam Jones",
+      "team": "MIL",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/mil/roster"
+    },
+    {
+      "player_id": 203083,
+      "player_name": "Andre Drummond",
+      "team": "NYK",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/nyk/roster"
+    },
+    {
+      "player_id": 1629656,
+      "player_name": "Quentin Grimes",
+      "team": "LAL",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/lal/roster"
+    },
+    {
+      "player_id": 1626162,
+      "player_name": "Kelly Oubre Jr.",
+      "team": "IND",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/ind/roster"
+    },
+    {
+      "player_id": 1631126,
+      "player_name": "Caleb Love",
+      "team": "PHI",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/phi/roster"
+    },
+    {
+      "player_id": 1642382,
+      "player_name": "Branden Carlson",
+      "team": "POR",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/por/roster"
+    },
+    {
+      "player_id": 1630572,
+      "player_name": "Sandro Mamukelashvili",
+      "team": "LAL",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/lal/roster"
+    },
+    {
+      "player_id": 1641712,
+      "player_name": "Rayan Rupert",
+      "team": "PHI",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/phi/roster"
+    },
+    {
+      "player_id": 1626156,
+      "player_name": "D'Angelo Russell",
+      "team": "MEM",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/mem/roster"
+    },
+    {
+      "player_id": 202699,
+      "player_name": "Tobias Harris",
+      "team": "SAS",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/sas/roster"
+    },
+    {
+      "player_id": 1631204,
+      "player_name": "Marcus Sasser",
+      "team": "DAL",
+      "how_acquired": "2026 offseason roster move (trade/free agency/waiver \u2014 see note)",
+      "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/dal/roster"
+    }
+  ]
+}
