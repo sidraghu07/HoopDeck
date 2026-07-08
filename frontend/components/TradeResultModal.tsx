@@ -1,6 +1,6 @@
 "use client";
 
-import { TradeFairness, TradeLegality, TradeResult, TradeSideResult, TradeVerdict } from "@/lib/types";
+import { TeamFit, TradeFairness, TradeLegality, TradeResult, TradeSideResult, TradeVerdict } from "@/lib/types";
 import styles from "./TradeResultModal.module.css";
 
 const FAIRNESS_LABEL: Record<TradeFairness["verdict"], string> = {
@@ -21,6 +21,34 @@ function FairnessBadge({ fairness }: { fairness: TradeFairness }) {
       {FAIRNESS_LABEL[fairness.verdict]} ({fairness.diff > 0 ? "+" : ""}
       {fairness.diff})
     </span>
+  );
+}
+
+const TEAM_FIT_LABEL: Record<TeamFit["verdict"], string> = {
+  would_accept: "Would accept",
+  would_reject: "Would reject",
+  mixed: "Mixed",
+  unknown: "Unknown",
+};
+
+function TeamFitSection({ teamFit }: { teamFit: TeamFit }) {
+  const cls =
+    teamFit.verdict === "would_accept"
+      ? styles.fairnessGood
+      : teamFit.verdict === "would_reject"
+        ? styles.fairnessBad
+        : styles.fairnessNeutral;
+  return (
+    <div className={styles.teamFitBlock}>
+      <div className={styles.teamFitLine}>
+        <span className={`${styles.fairnessBadge} ${cls}`}>{TEAM_FIT_LABEL[teamFit.verdict]}</span>
+        <span className={styles.teamFitDetail}>
+          Position: {teamFit.position_fit} · Timeline: {teamFit.timeline_fit ?? "unknown"}
+          {teamFit.pick_fit !== "neutral" && <> · Picks: {teamFit.pick_fit}</>}
+        </span>
+      </div>
+      <div className={styles.teamFitReason}>{teamFit.reason}</div>
+    </div>
   );
 }
 
@@ -45,6 +73,7 @@ function SideCard({
         <div className={styles.sideTeam}>{team}</div>
         <FairnessBadge fairness={legality.fairness} />
       </div>
+      <TeamFitSection teamFit={legality.team_fit} />
       <div className={styles.sideRow}>
         <div className={styles.sideCol}>
           <span className={styles.sideLabel}>BEFORE</span>

@@ -5,10 +5,12 @@ from pydantic import BaseModel
 from api.cba_rules import evaluate_trade_legality, fairness_verdict, unknown_legality
 from api.db import pool
 from api.lineup_engine import MODELS, assign_minutes, predict, roster_features
+from api.team_fit import pick_capital, position_fit, team_fit_verdict, team_timeline
 
 router = APIRouter()
 
 TOP_N = 5
+TIMELINE_LOOKBACK_SEASONS = 3
 
 
 class TradeRequest(BaseModel):
@@ -113,6 +115,24 @@ def _legality_for_team(cur, league: str, team: str, outgoing_ids: list[int], inc
     return evaluate_trade_legality(payroll, outgoing, incoming)
 
 
+def _team_seasons_history(cur, league: str, team: str, seasons: int = TIMELINE_LOOKBACK_SEASONS) -> tuple[list[dict], list[float]]:
+    cur.execute(
+        "SELECT season, net_rating FROM team_seasons WHERE league = %(league)s AND team = %(team)s "
+        "ORDER BY season DESC LIMIT %(n)s",
+        {"league": league, "team": team, "n": seasons},
+    )
+    recent = cur.fetchall()
+    if not recent:
+        return [], []
+
+    cur.execute(
+        "SELECT net_rating FROM team_seasons WHERE league = %(league)s AND season = %(season)s",
+        {"league": league, "season": recent[0]["season"]},
+    )
+    league_pool = [r["net_rating"] for r in cur.fetchall()]
+    return recent, league_pool
+
+
 def _fetch_picks(cur, league: str, pick_ids: list[int], expected_owner: str) -> list[dict]:
     if not pick_ids:
         return []
@@ -168,6 +188,9 @@ def simulate_trade(request: TradeRequest):
                 cur, league, request.team_b, request.players_from_b, request.players_from_a
             )
 
+            history_a, league_pool_a = _team_seasons_history(cur, league, request.team_a)
+            history_b, league_pool_b = _team_seasons_history(cur, league, request.team_b)
+
     def _ratings(roster: dict[int, dict], player_ids: list[int]) -> list[int]:
         return [roster[pid]["rating_overall"] for pid in player_ids if roster[pid]["rating_overall"] is not None]
 
@@ -176,6 +199,19 @@ def simulate_trade(request: TradeRequest):
     fairness_a = fairness_verdict(ratings_from_a, ratings_from_b)
     fairness_b = fairness_verdict(ratings_from_b, ratings_from_a)
 
+    timeline_a = team_timeline(history_a, league_pool_a)
+    timeline_b = team_timeline(history_b, league_pool_b)
+    posfit_a = position_fit(
+        [roster_b[pid] for pid in request.players_from_b], set(request.players_from_a), roster_a
+    )
+    posfit_b = position_fit(
+        [roster_a[pid] for pid in request.players_from_a], set(request.players_from_b), roster_b
+    )
+    picks_a = pick_capital(picks_from_a, picks_from_b)
+    picks_b = pick_capital(picks_from_b, picks_from_a)
+    team_fit_a = team_fit_verdict(posfit_a, timeline_a, picks_a)
+    team_fit_b = team_fit_verdict(posfit_b, timeline_b, picks_b)
+
     if legality_a["legal"] is None or legality_b["legal"] is None:
         cba_legal = None
     else:
@@ -183,8 +219,8 @@ def simulate_trade(request: TradeRequest):
 
     verdict = {
         "cba_legal": cba_legal,
-        "team_a": {**legality_a, "fairness": fairness_a},
-        "team_b": {**legality_b, "fairness": fairness_b},
+        "team_a": {**legality_a, "fairness": fairness_a, "team_fit": team_fit_a},
+        "team_b": {**legality_b, "fairness": fairness_b, "team_fit": team_fit_b},
     }
 
     before_a = _evaluate(league, roster_a)

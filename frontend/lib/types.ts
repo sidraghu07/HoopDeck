@@ -302,6 +302,14 @@ export interface TradeFairness {
   verdict: "favorable" | "fair" | "unfavorable";
 }
 
+export interface TeamFit {
+  position_fit: "need" | "neutral" | "redundant";
+  timeline_fit: "contending" | "retooling" | "rebuilding" | null;
+  pick_fit: "gaining" | "losing" | "neutral";
+  verdict: "would_accept" | "would_reject" | "mixed" | "unknown";
+  reason: string;
+}
+
 export interface TradeLegality {
   tier: "below_cap" | "under_first_apron" | "under_second_apron" | "over_second_apron" | "unknown";
   legal: boolean | null;
@@ -310,6 +318,7 @@ export interface TradeLegality {
   limit: number | null;
   reason: string;
   fairness: TradeFairness;
+  team_fit: TeamFit;
 }
 
 export interface TradeVerdict {

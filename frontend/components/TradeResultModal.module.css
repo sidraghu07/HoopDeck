@@ -156,6 +156,33 @@
   letter-spacing: 1px;
 }
 
+.teamFitBlock {
+  border: 1px solid var(--border-muted);
+  background: var(--bg-void);
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+
+.teamFitLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.teamFitDetail {
+  font-family: "VT323", monospace;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.teamFitReason {
+  font-family: "VT323", monospace;
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
 .sideRow {
   display: flex;
   align-items: center;
