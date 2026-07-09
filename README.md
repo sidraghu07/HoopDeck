@@ -1,6 +1,6 @@
 # HoopDeck
 
-HoopDeck is a basketball analytics app for exploring NBA and WNBA players. It renders pixel-art player cards with computed ratings and shot charts, and offers a lineup simulator and a trade machine that predicts on-court impact and checks trades against NBA CBA salary-cap rules.
+HoopDeck is a basketball analytics app for exploring NBA and WNBA players. It renders pixelated player cards with computed ratings and shot charts, and offers a lineup simulator and a trade machine that predicts on-court impact and checks trades against NBA CBA salary-cap rules.
 
 Live app: https://hoop-deck.vercel.app
 
