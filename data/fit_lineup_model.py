@@ -19,8 +19,6 @@ TEAM_CSV = f"data/csv/{'nba' if LEAGUE == 'NBA' else 'wnba'}_team_season_stats.c
 OUT_JSON = f"data/output/lineup_model_{'nba' if LEAGUE == 'NBA' else 'wnba'}.json"
 DATABASE_URL = os.environ.get("DATABASE_URL", "dbname=nba_cards")
 
-# WNBA has a smaller, noisier sample (fewer teams/seasons) than NBA, so its
-# Stage A/B fits get heavier Ridge regularization by default.
 ALPHA = 1.0 if LEAGUE == "NBA" else 3.0
 
 HOLDOUT_SEASONS = (

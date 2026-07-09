@@ -8,16 +8,12 @@ LEAGUE = os.environ.get("LEAGUE", "NBA")
 if LEAGUE not in ("NBA", "WNBA"):
     raise ValueError(f"Unsupported LEAGUE={LEAGUE!r}, expected 'NBA' or 'WNBA'")
 
-# See generate_player_dataset.py for SEASON_TYPE/SEASONS_OVERRIDE semantics.
 SEASON_TYPE = os.environ.get("SEASON_TYPE", "Regular Season")
 if SEASON_TYPE not in ("Regular Season", "Playoffs"):
     raise ValueError(f"Unsupported SEASON_TYPE={SEASON_TYPE!r}, expected 'Regular Season' or 'Playoffs'")
 IS_PLAYOFFS = SEASON_TYPE == "Playoffs"
 
 _prefix = "nba" if LEAGUE == "NBA" else "wnba"
-# The team-abbreviation lookup always comes from the regular-season player
-# CSV (playoff teams are a subset, and TEAM_ID -> abbreviation doesn't
-# depend on season type), regardless of which CSV this run is producing.
 PLAYER_CSV = f"data/csv/{_prefix}_player_base_stats.csv"
 OUT_CSV = f"data/csv/{_prefix}_team_playoff_stats.csv" if IS_PLAYOFFS else f"data/csv/{_prefix}_team_season_stats.csv"
 LEAGUE_ID_KWARGS = {} if LEAGUE == "NBA" else {"league_id_nullable": LeagueID.wnba}

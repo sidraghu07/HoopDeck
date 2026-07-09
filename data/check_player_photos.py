@@ -1,14 +1,3 @@
-"""
-Flags players whose NBA CDN headshot is the generic "no photo available"
-placeholder, so the frontend can skip straight to an initials avatar
-instead of rendering the placeholder as if it were a real photo.
-
-The placeholder is always served as a byte-identical PNG at
-content-length 12430, regardless of player_id, with an HTTP 200 (not a 404),
-so a plain image-load failure check on the frontend can't detect it.
-
-Run after build_card_data.py has populated player_seasons.
-"""
 import os
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -19,10 +8,6 @@ from db.loader import load_player_photos
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "dbname=nba_cards")
 
-# The CDN serves a byte-identical placeholder PNG (200 OK, not 404) for any
-# player_id without a real headshot, regardless of league — but each CDN's
-# placeholder is a different fixed size. Empirically confirmed against known
-# real-photo and known-no-photo player_ids on each host.
 PLACEHOLDER_CONTENT_LENGTH = {"NBA": 12430, "WNBA": 12531}
 CDN_URL = {
     "NBA": "https://cdn.nba.com/headshots/nba/latest/1040x760/{player_id}.png",
