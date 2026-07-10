@@ -31,15 +31,7 @@ def _current_season() -> str:
 def _team_id_map() -> dict[str, int]:
     if LEAGUE == "NBA":
         return {t["abbreviation"]: t["id"] for t in nba_static_teams.get_teams()}
-
-    player_csv = "data/csv/wnba_player_base_stats.csv"
-    players = pd.read_csv(player_csv, dtype={"SEASON": str})
-    latest_season = players["SEASON"].max()
-    lookup = (
-        players[players["SEASON"] == latest_season][["TEAM_ID", "TEAM_ABBREVIATION"]]
-        .drop_duplicates("TEAM_ABBREVIATION")
-    )
-    return dict(zip(lookup["TEAM_ABBREVIATION"], lookup["TEAM_ID"]))
+    return {t["abbreviation"]: t["id"] for t in nba_static_teams.get_wnba_teams()}
 
 
 season = _current_season()
