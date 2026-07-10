@@ -1,4 +1,5 @@
 
+import datetime
 import json
 import os
 import time
@@ -9,7 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 from nba_api.stats.static import teams as nba_static_teams
 
-from db.loader import load_player_salaries
+from db.loader import load_player_salaries, player_id_lookup, team_abbrev_lookup
 from rating_lib import normalize_name
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "dbname=nba_cards")
@@ -28,25 +29,10 @@ HEADERS = {
 BREF_ABBREV = {"PHX": "PHO", "CHA": "CHO", "BKN": "BRK"}
 
 
-def _current_season_from_csv() -> str:
-    players = pd.read_csv("data/csv/nba_player_base_stats.csv", dtype={"SEASON": str})
-    return players["SEASON"].max()
-
-
-def _player_id_lookup() -> dict[str, int]:
-    players = pd.read_csv("data/csv/nba_player_base_stats.csv", dtype={"SEASON": str})
-    lookup: dict[str, int] = {}
-    for _, row in players.drop_duplicates("PLAYER_ID").iterrows():
-        lookup[normalize_name(row["PLAYER_NAME"])] = int(row["PLAYER_ID"])
-    return lookup
-
-
-def _current_team_lookup() -> dict[int, str]:
-    path = "data/csv/nba_team_rosters.csv"
-    if not os.path.exists(path):
-        return {}
-    rosters = pd.read_csv(path)
-    return dict(zip(rosters["PLAYER_ID"], rosters["TEAM_ABBREVIATION"]))
+def _current_season() -> str:
+    today = datetime.date.today()
+    start_year = today.year if today.month >= 10 else today.year - 1
+    return f"{start_year}-{(start_year + 1) % 100:02d}"
 
 
 def scrape_bref_salaries(team_abbrev: str) -> pd.DataFrame:
@@ -76,9 +62,9 @@ def scrape_bref_salaries(team_abbrev: str) -> pd.DataFrame:
     return df
 
 
-season = _current_season_from_csv()
-player_id_lookup = _player_id_lookup()
-current_team_lookup = _current_team_lookup()
+season = _current_season()
+name_lookup = player_id_lookup(DATABASE_URL, "NBA")
+current_team_lookup = team_abbrev_lookup(DATABASE_URL, "NBA")
 team_abbrevs = [t["abbreviation"] for t in nba_static_teams.get_teams()]
 
 print(f"Fetching NBA salaries for {season} across {len(team_abbrevs)} teams...")
@@ -89,7 +75,7 @@ for abbrev in team_abbrevs:
     try:
         df = scrape_bref_salaries(abbrev)
         for _, row in df.iterrows():
-            player_id = player_id_lookup.get(row["NAME_NORM"])
+            player_id = name_lookup.get(row["NAME_NORM"])
             if player_id is None:
                 unmatched.append((abbrev, row["PLAYER_NAME"]))
                 continue
@@ -147,6 +133,7 @@ if os.path.exists(OVERRIDES_PATH):
         } for o in overrides])
         salaries_final = pd.concat([salaries_final, override_rows], ignore_index=True)
 
+os.makedirs(os.path.dirname(OUT_CSV), exist_ok=True)
 salaries_final.to_csv(OUT_CSV, index=False)
 print(f"\n✓ Saved {len(salaries_final)} salary rows → {OUT_CSV}")
 

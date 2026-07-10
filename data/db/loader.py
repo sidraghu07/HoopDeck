@@ -14,6 +14,17 @@ def player_id_lookup(database_url: str, league: str) -> dict[str, int]:
     return {normalize_name(player_name): player_id for player_id, player_name in rows}
 
 
+def team_abbrev_lookup(database_url: str, league: str) -> dict[int, str]:
+    with psycopg.connect(database_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT player_id, team FROM team_rosters WHERE league = %(league)s",
+                {"league": league},
+            )
+            rows = cur.fetchall()
+    return dict(rows)
+
+
 def load_player_photos(rows: list[tuple[int, bool]], database_url: str) -> None:
     print("\nLoading player_photos into Postgres…")
     with psycopg.connect(database_url) as conn:
