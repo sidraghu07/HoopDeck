@@ -1,6 +1,6 @@
 {
-  "as_of": "2026-07-08",
-  "note": "Same mechanism as data/seed/roster_overrides_nba.json: real contracts basketball-reference's own contracts pages haven't caught up to yet (brand-new free-agent signings won't appear on ANY team's bref page for weeks). Applied on top of the bref scrape in data/update_player_salaries.py by player_id. Remove an entry once bref's own data reflects it.",
+  "as_of": "2026-07-09",
+  "note": "Same mechanism as data/seed/roster_overrides_nba.json: real contracts basketball-reference's own contracts pages haven't caught up to yet (brand-new free-agent signings and sign-and-trades won't appear on ANY team's bref page for weeks). Applied on top of the bref scrape in data/update_player_salaries.py by player_id. Remove an entry once bref's own data reflects it.",
   "overrides": [
     {
       "player_id": 1629011,
@@ -17,6 +17,30 @@
       "salary": 3876529,
       "note": "1yr veteran-minimum contract signed 2026-07-06.",
       "source_url": "https://www.espn.com/nba/story/_/id/49236921/conley-celtics-becomes-12th-reach-20-nba-seasons"
+    },
+    {
+      "player_id": 203083,
+      "player_name": "Andre Drummond",
+      "team": "NYK",
+      "salary": 3876529,
+      "note": "1yr veteran-minimum contract signed 2026-07-03, filling the frontcourt void left by Mitchell Robinson's departure.",
+      "source_url": "https://www.hoopsrumors.com/2026/07/andre-drummond-signing-one-year-deal-with-knicks.html"
+    },
+    {
+      "player_id": 1629060,
+      "player_name": "Rui Hachimura",
+      "team": "LAC",
+      "salary": 14000000,
+      "note": "Year 1 of a 2yr/$28M deal signed 2026-07-07 (mid-level exception, team option on year 2); left the Lakers to sign with the Clippers as a free agent.",
+      "source_url": "https://www.espn.com/nba/story/_/id/49286926/rui-hachimura-clippers-agree-2-year-28m-deal"
+    },
+    {
+      "player_id": 1631117,
+      "player_name": "Walker Kessler",
+      "team": "LAL",
+      "salary": 30200000,
+      "note": "Year 1 of a 4yr/$130M sign-and-trade contract completed 2026-07-08 (Jazz sent Kessler to the Lakers for draft compensation).",
+      "source_url": "https://www.hoopsrumors.com/2026/07/jazz-to-sign-and-trade-walker-kessler-to-lakers.html"
     }
   ]
 }
