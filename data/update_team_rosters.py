@@ -152,6 +152,7 @@ if os.path.exists(overrides_path):
         } for o in overrides])
         rosters_final = pd.concat([rosters_final, override_rows], ignore_index=True)
 
+os.makedirs(os.path.dirname(OUT_CSV), exist_ok=True)
 rosters_final.to_csv(OUT_CSV, index=False)
 print(f"\n✓ Saved {len(rosters_final)} roster rows → {OUT_CSV}")
 
