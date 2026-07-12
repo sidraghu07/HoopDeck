@@ -5,7 +5,6 @@
   padding: 24px;
   min-height: calc(100vh - 40px);
   background: var(--bg-void);
-  background-image: radial-gradient(circle at 20% 0%, var(--bg-surface-alt) 0%, var(--bg-void) 60%);
 }
 
 @media (max-width: 800px) {
