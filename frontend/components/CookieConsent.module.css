@@ -1,0 +1,72 @@
+.banner {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1000;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 18px 20px;
+  border: 2px solid var(--border-strong);
+  background: var(--bg-surface);
+  box-shadow: 0 4px 0 var(--bg-inset);
+}
+
+.text {
+  flex: 1 1 320px;
+  font-family: "VT323", monospace;
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.accept,
+.decline {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+  padding: 10px 14px;
+  border: 2px solid var(--border-strong);
+  background: var(--bg-surface-alt);
+  color: var(--text-primary);
+  transition: color 80ms, border-color 80ms;
+}
+
+.accept {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+}
+
+.accept:hover {
+  color: var(--accent-bright);
+  border-color: var(--accent);
+}
+
+.decline:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+@media (max-width: 480px) {
+  .banner {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .actions {
+    justify-content: center;
+  }
+}
