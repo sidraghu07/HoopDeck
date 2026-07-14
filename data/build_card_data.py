@@ -733,10 +733,15 @@ if playoff_frames:
 
     playoff_pools = {s: build_pool(g) for s, g in playoff_stats_f.groupby("SEASON")}
 
-    def playoff_badge_for(overall: int) -> str | None:
+    RISER_MARGIN = 3
+    regular_overall_by_key = {
+        (c["player_id"], c["season"], c["league"]): c["ratings"]["overall"] for c in cards
+    }
+
+    def playoff_badge_for(overall: int, regular_overall: int | None) -> str | None:
         if overall >= 90:
             return "Playoff Elite"
-        if overall >= 75:
+        if regular_overall is not None and overall >= regular_overall + RISER_MARGIN:
             return "Playoff Riser"
         return None
 
@@ -771,7 +776,9 @@ if playoff_frames:
             "positions":        row["POSITION_LIST"],
             "primary_position": row["PRIMARY_POSITION"],
 
-            "playoff_badge": playoff_badge_for(rating["overall"]),
+            "playoff_badge": playoff_badge_for(
+                rating["overall"], regular_overall_by_key.get((pid, season, league))
+            ),
             "games_played":  int(row["GP"]),
 
             "ratings": rating,

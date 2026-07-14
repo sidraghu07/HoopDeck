@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { pressStart2P, vt323 } from "@/lib/fonts";
 import ClickSparkGate from "@/components/ClickSpark/ClickSparkGate";
 import Header from "@/components/Header";
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
         </ClickSparkGate>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
